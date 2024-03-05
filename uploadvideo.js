@@ -28,37 +28,34 @@ const upload = multer({
 
 router.post("/upload", (req, res) => {
   upload.single("video")(req, res, (err) => {
+    if (err instanceof multer.MulterError && err.code === "LIMIT_FILE_SIZE") {
+      return res.status(400).json({ error: "File size too large" });
+    }
+
     if (err) {
-      if (err instanceof multer.MulterError) {
-        if (err.code === "LIMIT_FILE_SIZE") {
-          return res.status(400).json({ error: "File size too large" });
-        }
-      } else {
-        return res.status(500).json({ error: "faillll" });
-      }
+      return res.status(500).json({ error: "faillll" });
     }
-    
-    if (req.file) {
-      const fileVideo = req.file.originalname.split(".").pop().toLowerCase();
-      if (checkfileVideo.includes(fileVideo)) {
-        const upLoadedVideo = req.file.filename;
-        return res.status(200).json({
-          statusCode: res.statusCode,
-          message: "Upload file success",
-          data: {
-            videoURL: `${req.protocol}://${req.hostname}:${port}/${upLoadedVideo}`,
-          },
-        });
-      } else {
-        fs.unlinkSync(req.file.path);
-        return res.status(400).json({ error: "Invalid file type" });
-      }
-    } else {
-      return res.status(400).json({ error: "Upload video pleasee" });
+
+    if (!req.file) {
+      return res.status(400).json({ err: "Upload video pleaseeeee" });
     }
+    const fileVideo = req.file.originalname.split(".").pop().toLowerCase();
+
+    if (!checkfileVideo.includes(fileVideo)) {
+      fs.unlinkSync(req.file.path);
+      return res.status(400).json({ error: "Invalid file type" });
+    }
+
+    const upLoadedVideo = req.file.filename;
+    return res.status(200).json({
+      statusCode: res.statusCode,
+      message: "Upload file success",
+      data: {
+        videoURL: `${req.protocol}://${req.hostname}:${port}/${upLoadedVideo}`,
+      },
+    });
   });
 });
-
 
 router.get("/:filename", (req, res) => {
   const { filename } = req.params;
@@ -70,22 +67,19 @@ router.delete("/:id", (req, res) => {
   const { id } = req.params;
   const files = fs.readdirSync("./uploads");
   const fileDelete = files.find((file) => file.startsWith(`${id}_video`));
-  
-  // Return first
-  
-  
-  if (fileDelete) {
-    fs.unlinkSync(path.join(__dirname, "uploads", fileDelete));
-    res.json({
-      statusCode: res.statusCode,
-      message: `File ${fileDelete} deleted successfully`,
-    });
-  } else {
+
+  if (!fileDelete) {
     res.json({
       statusCode: res.statusCode,
       message: `File with ID ${id} not found`,
     });
   }
+
+  fs.unlinkSync(path.join(__dirname, "uploads", fileDelete));
+  res.json({
+    statusCode: res.statusCode,
+    message: `File ${fileDelete} deleted successfully`,
+  });
 });
 
 module.exports = router;
