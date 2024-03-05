@@ -6,7 +6,7 @@ const upLoadVideo = require("./src/uploadvideo");
 require("dotenv").config();
 
 const app = express();
-const port = process.env.PORT;
+const port = 3000;
 
 const connection = mysql.createConnection(process.env.DATABASE_URL);
 
