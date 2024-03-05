@@ -14,6 +14,7 @@ app.get('/', (req, res) => {
 app.use('/', upLoadVideo);
 
 app.listen(port, () => {
+    
     console.log(`Server is running on http://localhost:${port}`);
 });
 
