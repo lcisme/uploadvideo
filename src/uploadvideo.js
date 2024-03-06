@@ -16,20 +16,20 @@ const upload = multer({
 // const countUpLoad = 0;
 
 router.post("/upload", (req, res) => {
-  req.db.query("SELECT role_id FROM user_role WHERE user_id = ?", [userId], (err, results, fields) => {
-    if (err) {
-      return res.status(500).json({ error: "Failed to retrieve user role" });
-    }
+  // req.db.query("SELECT role_id FROM user_role WHERE user_id = ?", [userId], (err, results, fields) => {
+  //   if (err) {
+  //     return res.status(500).json({ error: "Failed to retrieve user role" });
+  //   }
   
-    if (results.length === 0) {
-      return res.status(403).json({ error: "User role not found" });
-    }
+  //   if (results.length === 0) {
+  //     return res.status(403).json({ error: "User role not found" });
+  //   }
   
-    const userRoleId = results[0].role_id;
-    if (userRoleId !== "ROLE_USER" && userRoleId !== "ROLE_ADMIN") { 
-      return res.status(403).json({ error: "Unauthorized" });
-    }
-  });
+  //   const userRoleId = results[0].role_id;
+  //   if (userRoleId !== "ROLE_USER" && userRoleId !== "ROLE_ADMIN") { 
+  //     return res.status(403).json({ error: "Unauthorized" });
+  //   }
+  // });
   
 
   upload.single("video")(req, res, (err) => {
