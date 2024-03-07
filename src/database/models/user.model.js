@@ -26,6 +26,10 @@ module.exports = (sequelize, Sequelize) => {
         allowNull: false,
         unique: true,
       },
+      role: {
+        type: DataTypes.STRING(100),
+        defaultValue: 'ROLE_USER',
+      },
     },
     {
       timestamps: true,

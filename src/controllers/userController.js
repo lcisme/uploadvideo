@@ -1,6 +1,7 @@
 const userService = require("../services/userService");
-const { validate } = require("./validators/userValidator");
-const { createToken } = require("../authentication/jwt");
+const { validate, validateUpdate } = require("./validators/userValidator");
+const { createToken, checkUserRole } = require("../authentication/jwt");
+const userModel = require("../database/models/user.model");
 
 class ApplicationError extends Error {
   constructor(statusCode, message) {
@@ -34,7 +35,6 @@ class BaseResponse {
   }
 }
 
-// DTO
 const createUser = async (req, res, next) => {
   const userData = req.body;
   try {
@@ -44,21 +44,13 @@ const createUser = async (req, res, next) => {
     e.status = 400;
     return next(e);
   }
-
-  try {
-    const user = await userService.createUser(userData);
-    if (user) {
-      return BaseResponse.success(res, 200, "ok", { user });
-    } else {
-      const error = new Error("User already exists");
-      error.status = 400;
-      return next(error);
-    }
-  } catch (error) {
-    const e = new Error("Cannot create user");
-    console.log(error);
-    return next(e);
+  const user = await userService.createUser(userData);
+  if (!user) {
+    const error = new Error("User already exists");
+    error.status = 400;
+    return next(error);
   }
+  return BaseResponse.success(res, 200, "ok", { user });
 };
 
 const verifyUser = async (req, res, next) => {
@@ -73,36 +65,104 @@ const verifyUser = async (req, res, next) => {
   }
 
   try {
-    const user = await userService.verifyUser(userData);
+    const { dataValues: user } = await userService.verifyUser(userData);
     if (user) {
       try {
         const token = await createToken({
-          email: userData.email,
-          id: user._id,
+          email: user.email,
+          id: user.id,
+          role: user.role,
         });
-        res.status(200).json({
-          status: "success",
-          token: token,
-        });
+
+        return BaseResponse.success(res, 200, "success", token);
       } catch (error) {
-        // console.log(error);
         throw error;
-        // const e = new Error("Cannot create token");
-        // return next(e);
       }
     } else {
-      // const e = new Error("Wrong email or password");
-      // e.status = 400;
       throw new ApplicationError(400, "Wrong email or password");
-      // return next(e);
     }
   } catch (error) {
-    // const e = new Error("Cannot verify user");
+    return next(error);
+  }
+};
+
+const getAllUsers = async (req, res, next) => {
+  try {
+    const users = await userService.getAllUsers();
+    if (!users) {
+      const e = new Error("users not found");
+      e.status = 400;
+      return next(e);
+    }
+    return BaseResponse.success(res, 200, "success", { users });
+  } catch (error) {
+    const e = new Error("Cannot get all users");
+    return next(e);
+  }
+};
+
+const getUserById = async (req, res, next) => {
+  const id = req.params.userId;
+  try {
+    const user = await userService.getUserById(id);
+    if (!user) {
+      const e = new Error("user not found");
+      e.status = 404;
+      return next(e);
+    }
+    return BaseResponse.success(res, 200, "success", { user });
+  } catch (error) {
+    const e = new Error("Cannot get user");
+    return next(e);
+  }
+};
+
+const updateUserById = async (req, res, next) => {
+  const id = req.params.userId;
+  const updateParams = req.body;
+  try {
+    await validateUpdate(updateParams);
+  } catch (error) {
+    const e = new Error("Invalid user data");
+    return next(e);
+  }
+
+  try {
+    const user = await userService.updateUserById(id, updateParams);
+    if (!user) {
+      const e = new Error("user not found");
+      e.status = 404;
+      return next(e);
+    }
+    return BaseResponse.success(res, 200, "success", { user });
+  } catch (error) {
+    console.error("Error updating user:", error);
+    const e = new Error("Cannot update user");
+    return next(e);
+  }
+};
+
+const deleteUserById = async (req, res, next) => {
+  const id = req.params.userId;
+  try {
+    const user = await userService.deleteUserById(id);
+    if (!user) {
+      const e = new Error("user not found");
+      e.status = 404;
+      return next(e);
+    }
+    return BaseResponse.success(res, 200, "success");
+  } catch (error) {
+    const e = new Error("Cannot delete user");
     return next(e);
   }
 };
 
 module.exports = {
+  getAllUsers,
+  getUserById,
+  updateUserById,
+  deleteUserById,
   createUser,
   verifyUser,
 };

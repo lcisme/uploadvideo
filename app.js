@@ -9,20 +9,17 @@ const db = require("./src/database/models");
 const app = express();
 const port = process.env.PORT;
 
-// Kết nối đến cơ sở dữ liệu bằng Sequelize
-// const sequelize = new Sequelize(databaseUrl);
-
-// Kiểm tra kết nối cơ sở dữ liệu
-// sequelize.authenticate()
+// db.sequelize
+//   .sync({ force: true })
 //   .then(() => {
-//     console.log('Connection ok.');
+//     console.log("Synced db.");
 //   })
-//   .catch(err => {
-//     console.error('Connection fail: ', err);
+//   .catch((err) => {
+//     console.log("Failed to sync db: " + err.message);
 //   });
 
 db.sequelize
-  .sync({ force: true })
+  .sync()
   .then(() => {
     console.log("Synced db.");
   })
@@ -30,17 +27,20 @@ db.sequelize
     console.log("Failed to sync db: " + err.message);
   });
 
-// Sử dụng middleware để xử lý dữ liệu từ request
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
-// Sử dụng router cho đường dẫn "/v1/users"
 app.use("/v1/users", userRouter);
 
-// Sử dụng middleware cho đường dẫn gửi video
 app.use("/", upLoadVideo);
 
-// Lắng nghe các kết nối tới cổng đã chỉ định
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({
+    message: err.message
+  });
+});
+
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });
