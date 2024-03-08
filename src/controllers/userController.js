@@ -50,7 +50,7 @@ const createUser = async (req, res, next) => {
     error.status = 400;
     return next(error);
   }
-  return BaseResponse.success(res, 200, "ok", { user });
+  return BaseResponse.success(res, 200, "ok", user);
 };
 
 const verifyUser = async (req, res, next) => {
@@ -58,28 +58,23 @@ const verifyUser = async (req, res, next) => {
 
   try {
     await validate(userData);
-  } catch (error) {
-    const e = new Error("Wrong email or password");
-    e.status = 400;
-    return next(e);
-  }
 
-  try {
     const { dataValues: user } = await userService.verifyUser(userData);
     if (user) {
-      try {
-        const token = await createToken({
-          email: user.email,
-          id: user.id,
-          role: user.role,
-        });
+      const token = await createToken({
+        email: user.email,
+        id: user.id,
+        role: user.role,
+      });
 
-        return BaseResponse.success(res, 200, "success", token);
-      } catch (error) {
-        throw error;
-      }
+      return BaseResponse.success(res, 200, "success", {
+        accessToken: token,
+        role: user.role,
+      });
     } else {
-      throw new ApplicationError(400, "Wrong email or password");
+      const e = new Error("Wrong email or password");
+      e.status = 400;
+      throw e;
     }
   } catch (error) {
     return next(error);
@@ -90,14 +85,11 @@ const getAllUsers = async (req, res, next) => {
   try {
     const users = await userService.getAllUsers();
     if (!users) {
-      const e = new Error("users not found");
-      e.status = 400;
-      return next(e);
+      throw new ApplicationError(400, "users not found");
     }
-    return BaseResponse.success(res, 200, "success", { users });
+    return BaseResponse.success(res, 200, "success", users);
   } catch (error) {
-    const e = new Error("Cannot get all users");
-    return next(e);
+    return next(new ApplicationError(500, "Cannot get all users"));
   }
 };
 
@@ -106,14 +98,11 @@ const getUserById = async (req, res, next) => {
   try {
     const user = await userService.getUserById(id);
     if (!user) {
-      const e = new Error("user not found");
-      e.status = 404;
-      return next(e);
+      throw new ApplicationError(404, "user not found");
     }
-    return BaseResponse.success(res, 200, "success", { user });
+    return BaseResponse.success(res, 200, "success", user);
   } catch (error) {
-    const e = new Error("Cannot get user");
-    return next(e);
+    return next(new ApplicationError(500, "Cannot get user"));
   }
 };
 
@@ -123,22 +112,17 @@ const updateUserById = async (req, res, next) => {
   try {
     await validateUpdate(updateParams);
   } catch (error) {
-    const e = new Error("Invalid user data");
-    return next(e);
+    return next(new ApplicationError(400, "Invalid user data"));
   }
 
   try {
     const user = await userService.updateUserById(id, updateParams);
     if (!user) {
-      const e = new Error("user not found");
-      e.status = 404;
-      return next(e);
+      throw new ApplicationError(404, "user not found");
     }
     return BaseResponse.success(res, 200, "success", { user });
   } catch (error) {
-    console.error("Error updating user:", error);
-    const e = new Error("Cannot update user");
-    return next(e);
+    return next(new ApplicationError(500, "Cannot update user"));
   }
 };
 
@@ -147,14 +131,11 @@ const deleteUserById = async (req, res, next) => {
   try {
     const user = await userService.deleteUserById(id);
     if (!user) {
-      const e = new Error("user not found");
-      e.status = 404;
-      return next(e);
+      throw new ApplicationError(404, "user not found");
     }
     return BaseResponse.success(res, 200, "success");
   } catch (error) {
-    const e = new Error("Cannot delete user");
-    return next(e);
+    return next(new ApplicationError(500, "Cannot delete user"));
   }
 };
 

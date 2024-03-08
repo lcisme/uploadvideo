@@ -1,6 +1,7 @@
 const jwt = require("jsonwebtoken");
+const { JWT_TOKEN_EXPIRE } = require("../config/constant");
 const jwtSecret = process.env.JWT_SECRET;
-const jwtTokenExpire = process.env.JWT_TOKEN_EXPIRE;
+const jwtTokenExpire = JWT_TOKEN_EXPIRE;
 
 const createToken = async (data) => {
   console.log(data);

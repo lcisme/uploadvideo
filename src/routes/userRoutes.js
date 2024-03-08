@@ -1,6 +1,6 @@
 const express = require('express');
 const router = new express.Router();
-const {checkAuth, checkUserRole} = require('../authentication/checkAuth');
+const {checkAuth, checkRoleUser, checkRolePremium , checkRoleAdmin} = require('../authentication/checkAuth');
 
 const userController = require('../controllers/userController');
 
@@ -9,9 +9,9 @@ router.post('/login', userController.verifyUser);
 
 
 // crud
-router.get('/getAll', userController.getAllUsers)
-router.get('/get/:userId', userController.getUserById)
+router.get('/getAll', checkAuth, userController.getAllUsers)
+router.get('/get/:userId', checkAuth,checkRoleUser, userController.getUserById)
 router.patch('/get/:userId', checkAuth, userController.updateUserById)
-router.delete('/get/:userId', checkAuth, checkUserRole,userController.deleteUserById)
+router.delete('/get/:userId', checkAuth, checkRoleAdmin,userController.deleteUserById)
 
 module.exports = router;

@@ -3,6 +3,7 @@ require("dotenv").config();
 const express = require("express");
 const bodyParser = require("body-parser");
 const userRouter = require("./src/routes/userRoutes");
+const fileRouter = require("./src/routes/fileRoutes");
 const upLoadVideo = require("./src/uploadvideo");
 const db = require("./src/database/models");
 
@@ -31,6 +32,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
 app.use("/v1/users", userRouter);
+app.use("/v1/files", fileRouter);
 
 app.use("/", upLoadVideo);
 

@@ -23,7 +23,9 @@ const verifyUser = async (userData) => {
     userData.password,
     user.password
   );
-  return user;
+  if (isPasswordCorrect) {
+    return user;
+  }
 };
 
 const getAllUsers = () => {

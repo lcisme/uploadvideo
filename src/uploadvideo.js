@@ -13,24 +13,7 @@ const upload = multer({
     fileSize: MAX_FILE_SIZE,
   },
 });
-// const countUpLoad = 0;
-
-router.post("/upload", (req, res) => {
-  // req.db.query("SELECT role_id FROM user_role WHERE user_id = ?", [userId], (err, results, fields) => {
-  //   if (err) {
-  //     return res.status(500).json({ error: "Failed to retrieve user role" });
-  //   }
-  
-  //   if (results.length === 0) {
-  //     return res.status(403).json({ error: "User role not found" });
-  //   }
-  
-  //   const userRoleId = results[0].role_id;
-  //   if (userRoleId !== "ROLE_USER" && userRoleId !== "ROLE_ADMIN") { 
-  //     return res.status(403).json({ error: "Unauthorized" });
-  //   }
-  // });
-  
+router.post("/upload", (req, res) => {  
 
   upload.single("video")(req, res, (err) => {
     if (err instanceof multer.MulterError && err.code === "LIMIT_FILE_SIZE") {
@@ -64,14 +47,14 @@ router.post("/upload", (req, res) => {
             .status(500)
             .json({ error: "Failed to save to database" + err });
         }
-        const filedId = results.insertId;
-        const videoURL = `${req.protocol}://${req.hostname}:${port}/${filedId}`;
+        const fileId = results.insertId;
+        const videoURL = `${req.protocol}://${req.hostname}:${port}/${fileId}`;
 
         return res.status(200).json({
           statusCode: res.statusCode,
           message: "Upload file success",
           data: {
-            filedId,
+            fileId,
             videoURL,
           },
         });
