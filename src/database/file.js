@@ -12,6 +12,10 @@ const getAllFiles = async () => {
   return files;
 };
 
+const getAllFilesById = async (fileId) => {
+  const files = await File.findAll({ where: { user_Id: fileId } });
+  return files;
+};
 const getFileById = async (fileId) => {
   const file = await File.findOne({ where: { id: fileId } });
   return file;
@@ -49,4 +53,5 @@ module.exports = {
   updateFileById,
   deleteFileById,
   createFile,
+  getAllFilesById
 };

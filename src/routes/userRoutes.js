@@ -1,6 +1,6 @@
 const express = require('express');
 const router = new express.Router();
-const {checkAuth, checkRoleUser, checkRolePremium , checkRoleAdmin} = require('../authentication/checkAuth');
+const {checkAuth, checkRoleUser , checkRoleAdmin} = require('../authentication/checkAuth');
 
 const userController = require('../controllers/userController');
 

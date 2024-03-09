@@ -4,6 +4,10 @@ const getAllFiles = async () => {
   return File.getAllFiles();
 };
 
+const getAllFilesById = async (fileId) => {
+  return File.getAllFilesById(fileId);
+};
+
 const getFileById = async (fileId) => {
   return File.getFileById(fileId);
 };
@@ -26,4 +30,5 @@ module.exports = {
   updateFileById,
   deleteFileById,
   createFile,
+  getAllFilesById
 };

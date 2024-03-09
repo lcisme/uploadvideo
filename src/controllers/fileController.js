@@ -1,7 +1,5 @@
 const fileService = require("../services/uploadService");
-const fileModel = require("../database/models/file.model");
-const { SIZEFILE, URL_PATH } = require("../config/constant");
-const { v4: uuidv4 } = require("uuid");
+const { SIZEFILE } = require("../config/constant");
 const uploadFile = require("../middleware/upload");
 const fs = require("fs");
 
@@ -40,6 +38,21 @@ class BaseResponse {
 const getAllFiles = async (req, res, next) => {
   try {
     const files = await fileService.getAllFiles();
+    if (!files) {
+      throw new ApplicationError(400, "files not found");
+    }
+    return BaseResponse.success(res, 200, "success", files);
+  } catch (error) {
+    return next(new ApplicationError(500, "Cannot get all files "));
+  }
+};
+
+
+const getAllFilesById = async (req, res, next) => {
+  console.log(req.params.fileId);
+  const id = req.params.fileId;
+  try {
+    const files = await fileService.getAllFilesById(id);
     if (!files) {
       throw new ApplicationError(400, "files not found");
     }
@@ -146,4 +159,5 @@ module.exports = {
   updateFileById,
   deleteFileById,
   createFile,
+  getAllFilesById
 };

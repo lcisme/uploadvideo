@@ -1,7 +1,7 @@
 const jwt = require("jsonwebtoken");
 const db = require("../database/models");
 const fileModel = db.File;
-const { ROLE, JWT_SECRET } = require("../config/constant");
+const { ROLE, JWT_SECRET, MAX_FILES_PER_USER } = require("../config/constant");
 const jwtSecret = JWT_SECRET;
 
 const { File } = require("../database/models/file.model");
@@ -26,6 +26,15 @@ const checkRoleUserFile = async (req, res, next) => {
     return next();
   }
 
+  return next();
+};
+
+const checkRoleListUser = (req, res, next) => {
+  if (parseInt(req.params.fileId) !== parseInt(req.userData.id)) {
+        const e = new Error("Unauthorized access");
+    e.status = 403;
+    return next(e);
+  }
   return next();
 };
 
@@ -78,10 +87,28 @@ const checkRoleUser = (req, res, next) => {
 
   return next();
 };
+
+const checkRoleCreateUser = async (req, res, next) => {
+  if (req.userData.role === ROLE.USER) {
+    const filesUploadedByUserCount = await fileModel.findAll({
+      where: { user_Id: req.userData.id },
+    });
+    const turn = filesUploadedByUserCount.length;
+    console.log(MAX_FILES_PER_USER);
+    if (turn >= MAX_FILES_PER_USER) {
+      return res.status(400).json({
+        error: `You have reached the maximum limit of ${MAX_FILES_PER_USER} files.`,
+      });
+    }
+  }
+  return next();
+};
 module.exports = {
   checkAuth,
   checkRoleAdmin,
   checkRolePremium,
   checkRoleUser,
   checkRoleUserFile,
+  checkRoleCreateUser,
+  checkRoleListUser,
 };
