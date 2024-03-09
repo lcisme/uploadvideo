@@ -1,36 +1,52 @@
-const File = require("./models/fileModel");
+const db = require("../database/models");
+const File = db.File;
+const multer = require('multer')
 
-const createFile = (fileData) => {
-  return File.create(fileData);
-};
-
-const getFileById = async (fileId) => {
-  return File.findByPk(fileId);
+const createFile = async (fileData) => {
+  const newFile = await File.create(fileData);
+  return newFile;
 };
 
 const getAllFiles = async () => {
-  return File.findAll();
+  const files = await File.findAll();
+  return files;
+};
+
+const getFileById = async (fileId) => {
+  const file = await File.findOne({ where: { id: fileId } });
+  return file;
+};
+
+const updateFileById = async (fileId, updateParams) => {
+  try {
+    const [, rowsUpdated] = await File.update(updateParams, {
+      where: { id: fileId },
+    });
+
+    if (rowsUpdated === 0) {
+      throw new Error("Fail");
+    }
+    const updatedFile = await File.findOne({ where: { id: fileId } });
+    return updatedFile;
+  } catch (error) {
+    throw error;
+  }
 };
 
 const deleteFileById = async (fileId) => {
-  const deletedFile = await File.destroy({ where: { id: fileId } });
-  return deletedFile;
+  try {
+    const deletedFile = await File.destroy({ where: { id: fileId } });
+    return deletedFile;
+  } catch (error) {
+    console.error("Error deleting file:", error);
+    throw error;
+  }
 };
 
-// const updateFileById = async (fileId, updateParams) => {
-//   const [updatedRows] = await File.update(updateParams, {
-//     where: { id: fileId },
-//   });
-//   if (updatedRows === 0) {
-//     return null;
-//   }
-//   return File.findByPk(fileId);
-// };
-
 module.exports = {
-  createFile,
-  getFileById,
   getAllFiles,
+  getFileById,
+  updateFileById,
   deleteFileById,
-  //   updateFileById,
+  createFile,
 };

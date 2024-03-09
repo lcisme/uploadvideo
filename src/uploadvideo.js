@@ -3,80 +3,59 @@ const fs = require("fs");
 const multer = require("multer");
 const path = require("path");
 const router = express.Router();
-const { v4: uuidv4 } = require("uuid");
+const checkfileVideo = ["mp4", "avi", "mov", "mkv"];
 require("dotenv").config();
 const port = process.env.PORT;
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
+const storage = multer.diskStorage({
+  destination: "./src/uploads",
+  filename: (req, file, callback) => {
+    const ext = file.originalname.split(".").pop().toLowerCase();
+    const timestamp = Date.now();
+    const id = Math.floor(Math.random() * 100);
+    const uniqueFilename = `${id}_video${timestamp}.${ext}`;
+    callback(null, uniqueFilename);
+  },
+});
+
 const upload = multer({
+  storage: storage,
   limits: {
     fileSize: MAX_FILE_SIZE,
   },
 });
-// const countUpLoad = 0;
 
 router.post("/upload", (req, res) => {
-  // req.db.query("SELECT role_id FROM user_role WHERE user_id = ?", [userId], (err, results, fields) => {
-  //   if (err) {
-  //     return res.status(500).json({ error: "Failed to retrieve user role" });
-  //   }
-  
-  //   if (results.length === 0) {
-  //     return res.status(403).json({ error: "User role not found" });
-  //   }
-  
-  //   const userRoleId = results[0].role_id;
-  //   if (userRoleId !== "ROLE_USER" && userRoleId !== "ROLE_ADMIN") { 
-  //     return res.status(403).json({ error: "Unauthorized" });
-  //   }
-  // });
-  
-
   upload.single("video")(req, res, (err) => {
-    if (err instanceof multer.MulterError && err.code === "LIMIT_FILE_SIZE") {
-      return res.status(400).json({ error: "File size too large" });
-    }
-
     if (err) {
-      return res.status(500).json({ error: "faillll" });
-    }
-
-    if (!req.file) {
-      return res.status(400).json({ err: "Upload file pleaseeeee" });
-    }
-
-    const ext = req.file.originalname.split(".").pop().toLowerCase();
-    const id = uuidv4();
-    const fileName = `${id}.${ext}`;
-
-    const fileData = {
-      nameFile: fileName,
-      status: 0,
-      created_At: new Date(),
-      updated_At: new Date(),
-    };
-
-    req.db.query("Insert into files Set ?",
-      fileData,
-      (err, results, fields) => {
-        if (err) {
-          return res
-            .status(500)
-            .json({ error: "Failed to save to database" + err });
+      if (err instanceof multer.MulterError) {
+        if (err.code === "LIMIT_FILE_SIZE") {
+          return res.status(400).json({ error: "File size too large" });
         }
-        const filedId = results.insertId;
-        const videoURL = `${req.protocol}://${req.hostname}:${port}/${filedId}`;
+      } else {
+        return res.status(500).json({ error: "faillll" });
+      }
+    }
 
+    if (req.file) {
+      const fileVideo = req.file.originalname.split(".").pop().toLowerCase();
+      if (checkfileVideo.includes(fileVideo)) {
+        const upLoadedVideo = req.file.filename;
         return res.status(200).json({
           statusCode: res.statusCode,
           message: "Upload file success",
           data: {
-            filedId,
-            videoURL,
+            videoURL: `${req.protocol}://${req.hostname}:${port}/${upLoadedVideo}`,
           },
         });
+      } else {
+        fs.unlinkSync(req.file.path);
+        return res.status(400).json({ error: "Invalid file type" });
       }
-    );
+    } else {
+      return res.status(400).json({ error: "Upload video pleasee" });
+    }
   });
 });
 
@@ -91,18 +70,20 @@ router.delete("/:id", (req, res) => {
   const files = fs.readdirSync("./uploads");
   const fileDelete = files.find((file) => file.startsWith(`${id}_video`));
 
-  if (!fileDelete) {
+  // Return first
+
+  if (fileDelete) {
+    fs.unlinkSync(path.join(__dirname, "uploads", fileDelete));
+    res.json({
+      statusCode: res.statusCode,
+      message: `File ${fileDelete} deleted successfully`,
+    });
+  } else {
     res.json({
       statusCode: res.statusCode,
       message: `File with ID ${id} not found`,
     });
   }
-
-  fs.unlinkSync(path.join(__dirname, "uploads", fileDelete));
-  res.json({
-    statusCode: res.statusCode,
-    message: `File ${fileDelete} deleted successfully`,
-  });
 });
 
 module.exports = router;
