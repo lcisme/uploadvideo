@@ -45,7 +45,7 @@ const getAllFiles = async (req, res, next) => {
     }
     return BaseResponse.success(res, 200, "success", files);
   } catch (error) {
-    return next(new ApplicationError(500, "Cannot get all files"));
+    return next(new ApplicationError(500, "Cannot get all files "));
   }
 };
 

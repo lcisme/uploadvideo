@@ -13,5 +13,5 @@ router.get('/getAll', checkAuth, userController.getAllUsers)
 router.get('/get/:userId', checkAuth,checkRoleUser, userController.getUserById)
 router.patch('/get/:userId', checkAuth, userController.updateUserById)
 router.delete('/get/:userId', checkAuth, checkRoleAdmin,userController.deleteUserById)
-
+//
 module.exports = router;

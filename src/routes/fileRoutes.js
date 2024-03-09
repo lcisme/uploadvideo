@@ -1,7 +1,7 @@
 const express = require("express");
 
 const router = new express.Router();
-const { checkAuth,checkRoleUser, checkRoleUserFile } = require("../authentication/checkAuth");
+const { checkAuth, checkRoleUserFile } = require("../authentication/checkAuth");
 
 const fileController = require("../controllers/fileController");
 
@@ -26,5 +26,5 @@ router.delete(
   checkRoleUserFile,
   fileController.deleteFileById
 );
-
+//
 module.exports = router;
