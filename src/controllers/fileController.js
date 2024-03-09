@@ -1,7 +1,9 @@
 const fileService = require("../services/uploadService");
 const fileModel = require("../database/models/file.model");
-const { SIZEFILE } = require("../config/constant");
+const { SIZEFILE, URL_PATH } = require("../config/constant");
 const { v4: uuidv4 } = require("uuid");
+const uploadFile = require("../middleware/upload");
+const fs = require("fs");
 
 class ApplicationError extends Error {
   constructor(statusCode, message) {
@@ -65,13 +67,31 @@ const getFileById = async (req, res, next) => {
 
 const updateFileById = async (req, res, next) => {
   const id = req.params.fileId;
-  const updateParams = req.body;
   try {
-    const file = await fileService.updateFileById(id, updateParams);
-    if (!file) {
-      throw new ApplicationError(400, "file not found");
+    const file = await fileService.getFileById(id);
+    const fileName = file.nameFile;
+    console.log(fileName);
+    fs.unlinkSync(fileName);
+    await uploadFile(req, res);
+    if (!req.file) {
+      throw new ApplicationError(400, "Please upload a file!");
     }
-    return BaseResponse.success(res, 200, "success", { file });
+    if (req.file.size > SIZEFILE) {
+      throw new ApplicationError(
+        500,
+        `File size cannot be larger than ${SIZEFILE}MB!`
+      );
+    }
+    const filePath = req.file.path;
+    console.log(filePath);
+    const updatedFile = await fileService.updateFileById(id, {nameFile: filePath,});
+
+    return BaseResponse.success(
+      res,
+      200,
+      "Updated the file successfully",
+      updatedFile
+    );
   } catch (error) {
     return next(new ApplicationError(500, "Cannot update file"));
   }
@@ -80,37 +100,40 @@ const updateFileById = async (req, res, next) => {
 const deleteFileById = async (req, res, next) => {
   const id = req.params.fileId;
   try {
-    const file = await fileService.deleteFileById(id);
+    const file = await fileService.getFileById(id);
     if (!file) {
-      throw new ApplicationError(400, "file not found");
+      throw new ApplicationError(400, "File not found");
     }
-    return BaseResponse.success(res, 200, "success");
+    const fileName = file.nameFile;
+    fs.unlinkSync(fileName);
+    await fileService.deleteFileById(id);
+    return BaseResponse.success(res, 200, "success", { deleteFile: fileName });
   } catch (error) {
     return next(new ApplicationError(500, "Cannot delete file"));
   }
 };
 
 const createFile = async (req, res, next) => {
-  const nameFileReq = req.file;
-  const id = uuidv4();
-  const ext = req.file.originalname.split(".").pop().toLowerCase();
-  const fileSize = nameFileReq.size;
- 
-  const newFileName = `${id}.${ext}`;
-  if (fileSize > SIZEFILE) {
-    return next(new ApplicationError(400, "File size exceeds the limit"));
-  }
-
   try {
-    const newFile = await fileService.createFile({
-      nameFile: newFileName,
-    });
+    await uploadFile(req, res);
 
-    if (!newFile) {
-      throw new ApplicationError(400, "File name is required");
+    if (!req.file) {
+      throw new ApplicationError(400, "Please upload a file!");
     }
-
-    return BaseResponse.success(res, 201, "File created successfully", newFile);
+    if (req.file.size > SIZEFILE) {
+      throw new ApplicationError(
+        500,
+        `File size cannot be larger than ${SIZEFILE}MB!`
+      );
+    }
+    const filePath = req.file.path;
+    const fileRecord = await fileService.createFile({ nameFile: filePath });
+    return BaseResponse.success(
+      res,
+      200,
+      "Uploaded the file successfully",
+      fileRecord
+    );
   } catch (error) {
     return next(new ApplicationError(500, "Cannot create file"));
   }

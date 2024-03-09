@@ -6,12 +6,13 @@ const ROLE = {
 }
 const JWT_SECRET = process.env.JWT_SECRET
 const JWT_TOKEN_EXPIRE = process.env.JWT_TOKEN_EXPIRE;
-
+const URL_PATH = "../../uploads"
 const SIZEFILE = MAX_FILE_SIZE = 10 * 1024 * 1024
 module.exports = {
     DATABASE_URL,
     ROLE,
     SIZEFILE,
     JWT_SECRET,
-    JWT_TOKEN_EXPIRE
+    JWT_TOKEN_EXPIRE,
+    URL_PATH
 }
