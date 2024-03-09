@@ -10,5 +10,6 @@ db.sequelize = sequelize;
 db.User = require("./user.model.js")(sequelize, Sequelize);
 db.File = require("./file.model.js")(sequelize, Sequelize);
 
-
+db.User.hasMany(db.File, { foreignKey: 'user_Id' });
+db.File.belongsTo(db.User)
 module.exports = db;

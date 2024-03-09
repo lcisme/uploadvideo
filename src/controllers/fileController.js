@@ -126,8 +126,9 @@ const createFile = async (req, res, next) => {
         `File size cannot be larger than ${SIZEFILE}MB!`
       );
     }
+    const idUser = req.userData.id
     const filePath = req.file.path;
-    const fileRecord = await fileService.createFile({ nameFile: filePath });
+    const fileRecord = await fileService.createFile({ nameFile: filePath, user_Id: idUser });
     return BaseResponse.success(
       res,
       200,
