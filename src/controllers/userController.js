@@ -2,94 +2,54 @@ const userService = require("../services/userService");
 const { validate, validateUpdate } = require("./validators/userValidator");
 const { createToken, checkUserRole } = require("../authentication/jwt");
 const userModel = require("../database/models/user.model");
-
-class ApplicationError extends Error {
-  constructor(statusCode, message) {
-    super(message);
-    this.statusCode = statusCode;
-  }
-}
-
-class BaseResponse {
-  constructor() {
-    this.statusCode = 200;
-    this.message = "success";
-    this.data = {};
-    this.error = null;
-  }
-
-  static success(res, statusCode, message, data) {
-    this.statusCode = statusCode;
-    this.message = message;
-    this.data = data;
-    return res.status(this.statusCode).json({
-      message: this.message,
-      data: this.data,
-    });
-  }
-
-  static error(statusCode, message, error) {
-    this.statusCode = statusCode;
-    this.message = message;
-    this.error = error;
-  }
-}
+const { BaseResponse } = require("../common/common");
 
 const createUser = async (req, res, next) => {
   const userData = req.body;
   try {
     await validate(userData);
   } catch (error) {
-    const e = new Error("Invalid email or password");
-    e.status = 400;
-    return next(e);
+    return BaseResponse.error(res, 400, "Invalid email or password");
   }
   const user = await userService.createUser(userData);
   if (!user) {
-    const error = new Error("User already exists");
-    error.status = 400;
-    return next(error);
+    return BaseResponse.error(res, 400, "User already exists");
   }
   return BaseResponse.success(res, 200, "ok", user);
 };
 
 const verifyUser = async (req, res, next) => {
   const userData = req.body;
-
   try {
     await validate(userData);
-
     const { dataValues: user } = await userService.verifyUser(userData);
-    if (user) {
-      const token = await createToken({
-        email: user.email,
-        id: user.id,
-        role: user.role,
-      });
-
-      return BaseResponse.success(res, 200, "success", {
-        accessToken: token,
-        role: user.role,
-      });
-    } else {
-      const e = new Error("Wrong email or password");
-      e.status = 400;
-      throw e;
+    if (!user) {
+      return BaseResponse.error(res, 400, "Wrong email or password");
     }
+    const token = await createToken({
+      email: user.email,
+      id: user.id,
+      role: user.role,
+    });
+    return BaseResponse.success(res, 200, "success", {
+      accessToken: token,
+      role: user.role,
+    });
   } catch (error) {
     return next(error);
   }
 };
 
 const getAllUsers = async (req, res, next) => {
+  const page = req.query.page || 1;
   try {
-    const users = await userService.getAllUsers();
+    const users = await userService.getAllUsers(page);
     if (!users) {
-      throw new ApplicationError(400, "users not found");
+      return BaseResponse.error(res, 400, "users not found");
     }
     return BaseResponse.success(res, 200, "success", users);
   } catch (error) {
-    return next(new ApplicationError(500, "Cannot get all users"));
+    return next(error);
   }
 };
 
@@ -98,11 +58,11 @@ const getUserById = async (req, res, next) => {
   try {
     const user = await userService.getUserById(id);
     if (!user) {
-      throw new ApplicationError(404, "user not found");
+      return BaseResponse.error(res, 404, "user not found");
     }
     return BaseResponse.success(res, 200, "success", user);
   } catch (error) {
-    return next(new ApplicationError(500, "Cannot get user"));
+    return next(error);
   }
 };
 
@@ -112,17 +72,17 @@ const updateUserById = async (req, res, next) => {
   try {
     await validateUpdate(updateParams);
   } catch (error) {
-    return next(new ApplicationError(400, "Invalid user data"));
+    return BaseResponse.error(res, 400, "Invalid user data");
   }
 
   try {
     const user = await userService.updateUserById(id, updateParams);
     if (!user) {
-      throw new ApplicationError(404, "user not found");
+      return BaseResponse.error(res, 404, "user not found");
     }
     return BaseResponse.success(res, 200, "success", { user });
   } catch (error) {
-    return next(new ApplicationError(500, "Cannot update user"));
+    return next(error);
   }
 };
 
@@ -131,11 +91,26 @@ const deleteUserById = async (req, res, next) => {
   try {
     const user = await userService.deleteUserById(id);
     if (!user) {
-      throw new ApplicationError(404, "user not found");
+      return BaseResponse.error(res, 404, "user not found");
     }
     return BaseResponse.success(res, 200, "success");
   } catch (error) {
-    return next(new ApplicationError(500, "Cannot delete user"));
+    return next(error);
+  }
+};
+
+const searchByName = async (req, res, next) => {
+  const name = req.params.userName;
+  const sortOrder = (req.query.sortOrder || "asc").toLowerCase();
+  console.log(sortOrder);
+  try {
+    const user = await userService.searchByName(name, sortOrder);
+    if (!user) {
+      return BaseResponse.error(res, 400, "username not found");
+    }
+    return BaseResponse.success(res, 200, "success", user);
+  } catch (error) {
+    return next(error);
   }
 };
 
@@ -146,4 +121,5 @@ module.exports = {
   deleteUserById,
   createUser,
   verifyUser,
+  searchByName,
 };

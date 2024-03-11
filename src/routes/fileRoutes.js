@@ -1,12 +1,12 @@
 const express = require("express");
 
 const router = new express.Router();
-const { checkAuth, checkRoleUserFile,checkRoleListUser,checkRoleCreateUser } = require("../authentication/checkAuth");
+const { checkAuth, checkRoleUserFile,checkRoleAdmin,checkRoleListUser,checkRoleCreateUser } = require("../authentication/checkAuth");
 
 const fileController = require("../controllers/fileController");
 
 // crud
-router.get("/getAll", checkAuth, checkRoleUserFile, fileController.getAllFiles);
+router.get("/getAll", checkAuth, checkRoleAdmin, fileController.getAllFiles);
 router.get("/getAllBy/:fileId", checkAuth, checkRoleListUser, fileController.getAllFilesById);
 router.post("/upload", checkAuth, checkRoleCreateUser,fileController.createFile);
 router.get(

@@ -19,8 +19,12 @@ module.exports = (sequelize, Sequelize) => {
       },
       status: {
         type: DataTypes.INTEGER,
-        defaultValue: 0,
+        defaultValue: 1,
       },
+      // typeToken: {
+      //   type: DataTypes.STRING(25),
+      //   allowNull : false
+      // },
       email: {
         type: DataTypes.STRING(100),
         allowNull: false,

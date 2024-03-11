@@ -1,5 +1,7 @@
 const db = require("../database/models");
 const User = db.User;
+const Sequelize = require("sequelize");
+const { LIMIT } = require("../config/constant");
 
 const createUser = async (userData) => {
   const duplicationCheck = await User.findOne({
@@ -17,8 +19,12 @@ const verifyUser = async (userEmail) => {
   return user;
 };
 
-const getAllUsers = async () => {
-  const users = await User.findAll();
+const getAllUsers = async (page) => {
+  const OFFSET = (page - 1) * LIMIT;
+  const users = await User.findAll({
+    limit: LIMIT,
+    offset: OFFSET,
+  });
   return users;
 };
 
@@ -53,6 +59,28 @@ const deleteUserById = async (userId) => {
   }
 };
 
+const searchByName = async (userName, sortOrder) => {
+  try {
+    let orderCriteria = [["username", "ASC"]];
+
+    if (sortOrder === "desc") {
+      orderCriteria = [["username", "DESC"]];
+    }
+
+    const searchByName = await User.findAll({
+      where: {
+        username: {
+          [Sequelize.Op.like]: `%${userName}%`,
+        },
+      },
+      order: orderCriteria,
+    });
+    return searchByName;
+  } catch (error) {
+    throw error;
+  }
+};
+
 module.exports = {
   getAllUsers,
   getUserById,
@@ -60,4 +88,5 @@ module.exports = {
   deleteUserById,
   createUser,
   verifyUser,
+  searchByName,
 };

@@ -15,7 +15,7 @@ module.exports = (sequelize, Sequelize) => {
       },
       status: {
         type: DataTypes.INTEGER,
-        defaultValue: 0,
+        defaultValue: 1,
       },
       user_Id: {
         type: DataTypes.INTEGER,

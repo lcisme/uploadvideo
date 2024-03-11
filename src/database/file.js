@@ -42,7 +42,6 @@ const deleteFileById = async (fileId) => {
     const deletedFile = await File.destroy({ where: { id: fileId } });
     return deletedFile;
   } catch (error) {
-    console.error("Error deleting file:", error);
     throw error;
   }
 };
