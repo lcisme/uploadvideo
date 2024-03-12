@@ -45,5 +45,5 @@ const validateUpdate = ajv.compile(userUpdateSchema);
 
 module.exports = {
   validate,
-  validateUpdate,
+  validateUpdate
 };

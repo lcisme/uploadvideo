@@ -41,12 +41,12 @@ app.use("/v1/moveToTrash", trashRouter);
 
 // app.use("/", upLoadVideo);
 
-app.use((err, res) => {
+app.use((err, req, res ,next) => {
+  res.setHeader('Content-Type', 'application/json');
   return BaseResponse.error(res, err.statusCode, err.message, err);
 });
 
 const deleteFilesInTrash = async () => {
-  const now = new Date();
   const twoMinutesAgo = new Date(Date.now() - 2 * 60000);
   console.log(twoMinutesAgo);
   const filesInTrash = await File.findAll({
@@ -58,7 +58,7 @@ const deleteFilesInTrash = async () => {
   }
 };
 
-cron.schedule("*/2 * * * *", async () => {
+cron.schedule("* * * * *", async () => {
   try {
     await deleteFilesInTrash();
     console.log("Files in trash have been deleted.");

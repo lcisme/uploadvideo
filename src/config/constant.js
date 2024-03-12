@@ -5,7 +5,7 @@ const ROLE = {
   PREMIUM: "ROLE_PREMIUM",
   USER: "ROLE_USER",
 };
-const LIMIT = 100;
+const LIMIT = 2;
 const JWT_SECRET = process.env.JWT_REFRESH_SECRET;
 const JWT_TOKEN_EXPIRE = process.env.JWT_TOKEN_EXPIRE;
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;

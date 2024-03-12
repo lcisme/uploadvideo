@@ -1,8 +1,13 @@
 const userService = require("../services/userService");
 const { validate, validateUpdate } = require("./validators/userValidator");
-const { createToken, checkUserRole } = require("../authentication/jwt");
+const {
+  createToken,
+  createRefreshToken,
+  verifyToken
+} = require("../authentication/jwt");
 const userModel = require("../database/models/user.model");
-const { BaseResponse } = require("../common/common");
+const { BaseResponse, ApplicationError } = require("../common/common");
+// const jwt = require("jsonwebtoken");
 
 const createUser = async (req, res, next) => {
   const userData = req.body;
@@ -20,32 +25,49 @@ const createUser = async (req, res, next) => {
 
 const verifyUser = async (req, res, next) => {
   const userData = req.body;
+  await validate(userData);
+  const { dataValues: user } = await userService.verifyUser(userData);
+  if (!user) {
+    throw new ApplicationError(400, "Wrong email or password");
+  }
+  const token = await createToken({
+    email: user.email,
+    id: user.id,
+    role: user.role,
+  });
+
+  const refreshToken = await createRefreshToken({
+    email: user.email,
+    id: user.id,
+    role: user.role,
+  });
+  return BaseResponse.success(res, 200, "success", {
+    accessToken: token,
+    role: user.role,
+    refreshToken: refreshToken,
+  });
+};
+
+const refreshToken = async (req, res, next) => {
+  const { refreshToken } = req.body;
+  if (!refreshToken) {
+    throw new ApplicationError(400, "Refresh token is required");
+  }
   try {
-    await validate(userData);
-    const { dataValues: user } = await userService.verifyUser(userData);
-    if (!user) {
-      return BaseResponse.error(res, 400, "Wrong email or password");
-    }
-    const token = await createToken({
-      email: user.email,
-      id: user.id,
-      role: user.role,
-    });
-    return BaseResponse.success(res, 200, "success", {
-      accessToken: token,
-      role: user.role,
-    });
+    const decoded = verifyToken(refreshToken);
+    const { email, id, role } = decoded;
+    const accessToken = await createToken({ email, id, role });
+    return BaseResponse.success(res, 200, "success", { accessToken });
   } catch (error) {
     return next(error);
   }
 };
 
 const getAllUsers = async (req, res, next) => {
-  const page = req.query.page || 1;
   try {
-    const users = await userService.getAllUsers(page);
+    const users = await userService.getAllUsers();
     if (!users) {
-      return BaseResponse.error(res, 400, "users not found");
+      throw new ApplicationError(400, "users not found");
     }
     return BaseResponse.success(res, 200, "success", users);
   } catch (error) {
@@ -53,12 +75,22 @@ const getAllUsers = async (req, res, next) => {
   }
 };
 
+// const getUserById = async (req, res, next) => {
+//   const id = req.params.userId;
+
+//   const user = await userService.getUserById(id);
+//   if (!user) {
+//     throw new ApplicationError(404, "user not found");
+//   }
+//   return BaseResponse.success(res, 200, "success", user);
+// };
+
 const getUserById = async (req, res, next) => {
   const id = req.params.userId;
   try {
     const user = await userService.getUserById(id);
     if (!user) {
-      return BaseResponse.error(res, 404, "user not found");
+      throw new ApplicationError(404, "user not found");
     }
     return BaseResponse.success(res, 200, "success", user);
   } catch (error) {
@@ -88,10 +120,10 @@ const updateUserById = async (req, res, next) => {
 
 const deleteUserById = async (req, res, next) => {
   const id = req.params.userId;
+  const user = await userService.deleteUserById(id);
   try {
-    const user = await userService.deleteUserById(id);
     if (!user) {
-      return BaseResponse.error(res, 404, "user not found");
+      throw new ApplicationError(404, "user not found");
     }
     return BaseResponse.success(res, 200, "success");
   } catch (error) {
@@ -100,20 +132,25 @@ const deleteUserById = async (req, res, next) => {
 };
 
 const searchByName = async (req, res, next) => {
-  const name = req.params.userName;
-  const sortOrder = (req.query.sortOrder || "asc").toLowerCase();
-  console.log(sortOrder);
-  try {
-    const user = await userService.searchByName(name, sortOrder);
-    if (!user) {
-      return BaseResponse.error(res, 400, "username not found");
-    }
-    return BaseResponse.success(res, 200, "success", user);
-  } catch (error) {
-    return next(error);
+  const page = req.query.page || 1;
+  const limit = req.query.limit || 10;
+  const q = req.query.q;
+  const orderType = (req.query.orderType || "asc").toLowerCase();
+  const orderField = req.query.orderField || "username";
+  let select = req.query.select || "username";
+  const user = await userService.searchByName(
+    q,
+    orderType,
+    page,
+    limit,
+    orderField,
+    select
+  );
+  if (!user) {
+    throw new ApplicationError(400, "username not found");
   }
+  return BaseResponse.success(res, 200, "success", user);
 };
-
 module.exports = {
   getAllUsers,
   getUserById,
@@ -122,4 +159,5 @@ module.exports = {
   createUser,
   verifyUser,
   searchByName,
+  refreshToken,
 };

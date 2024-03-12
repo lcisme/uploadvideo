@@ -19,18 +19,17 @@ const verifyUser = async (userEmail) => {
   return user;
 };
 
-const getAllUsers = async (page) => {
-  const OFFSET = (page - 1) * LIMIT;
-  const users = await User.findAll({
-    limit: LIMIT,
-    offset: OFFSET,
-  });
+const getAllUsers = async () => {
+  const users = await User.findAll({attributes: { exclude: ['password'] }});
   return users;
 };
 
 const getUserById = async (userId) => {
-  const user = await User.findOne({ where: { id: userId } });
-  return user;
+  const user = await User.findOne({
+    where: { id: userId },
+    attributes: { exclude: ['password'] }
+  });
+    return user;
 };
 
 const updateUserById = async (userId, updateParams) => {
@@ -42,7 +41,7 @@ const updateUserById = async (userId, updateParams) => {
     if (rowsUpdated === 0) {
       throw new Error("Fail");
     }
-    const updatedProduct = await User.findOne({ where: { id: userId } });
+    const updatedProduct = await User.findOne({ where: { id: userId } },{attributes: { exclude: ['password'] }});
     return updatedProduct;
   } catch (error) {
     throw error;
@@ -59,23 +58,22 @@ const deleteUserById = async (userId) => {
   }
 };
 
-const searchByName = async (userName, sortOrder) => {
+const searchByName = async (q, orderType, page, limit, orderField,select) => {
   try {
-    let orderCriteria = [["username", "ASC"]];
-
-    if (sortOrder === "desc") {
-      orderCriteria = [["username", "DESC"]];
-    }
-
-    const searchByName = await User.findAll({
+    const OFFSET = (page - 1) * limit;
+    const searchResult = await User.findAll({
       where: {
-        username: {
-          [Sequelize.Op.like]: `%${userName}%`,
-        },
+        [Sequelize.Op.or]: [
+          { username: { [Sequelize.Op.like]: `%${q}%` } },
+          { email: { [Sequelize.Op.like]: `%${q}%` } },
+        ],
       },
-      order: orderCriteria,
+      order: [[orderField, orderType]],
+      limit: parseInt(limit),
+      offset: OFFSET,
+      attributes: select
     });
-    return searchByName;
+    return searchResult;
   } catch (error) {
     throw error;
   }
