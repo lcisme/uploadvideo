@@ -3,11 +3,14 @@ const { validate, validateUpdate } = require("./validators/userValidator");
 const {
   createToken,
   createRefreshToken,
-  verifyToken
+  verifyToken,
+  verifyRefreshToken,
 } = require("../authentication/jwt");
 const userModel = require("../database/models/user.model");
 const { BaseResponse, ApplicationError } = require("../common/common");
-// const jwt = require("jsonwebtoken");
+const jwt = require("jsonwebtoken");
+const { JWT_REFRESH_SECRET } = require("../config/constant");
+const jwtRefreshSecret = JWT_REFRESH_SECRET;
 
 const createUser = async (req, res, next) => {
   const userData = req.body;
@@ -40,6 +43,7 @@ const verifyUser = async (req, res, next) => {
     email: user.email,
     id: user.id,
     role: user.role,
+    typeToken: user.typeToken,
   });
   return BaseResponse.success(res, 200, "success", {
     accessToken: token,
@@ -48,16 +52,31 @@ const verifyUser = async (req, res, next) => {
   });
 };
 
-const refreshToken = async (req, res, next) => {
+const refreshTokenHandler = async (req, res, next) => {
   const { refreshToken } = req.body;
   if (!refreshToken) {
-    throw new ApplicationError(400, "Refresh token is required");
+    return next(new ApplicationError(400, "Refresh token is required"));
+  }
+  const decodedRefreshToken = jwt.verify(refreshToken, jwtRefreshSecret);
+  console.log(decodedRefreshToken);
+  if (!decodedRefreshToken.typeToken) {
+    return next(new ApplicationError(400, "This is not Refresh Token"));
   }
   try {
-    const decoded = verifyToken(refreshToken);
-    const { email, id, role } = decoded;
+    const decoded = verifyRefreshToken(refreshToken);
+    const { email, id, role, typeToken } = decoded;
     const accessToken = await createToken({ email, id, role });
-    return BaseResponse.success(res, 200, "success", { accessToken });
+    console.log(accessToken + "hhuhu");
+    const refreshNewToken = await createRefreshToken({
+      email,
+      id,
+      role,
+      typeToken,
+    });
+    return BaseResponse.success(res, 200, "success", {
+      accessToken: accessToken,
+      refreshToken: refreshNewToken,
+    });
   } catch (error) {
     return next(error);
   }
@@ -159,5 +178,5 @@ module.exports = {
   createUser,
   verifyUser,
   searchByName,
-  refreshToken,
+  refreshTokenHandler,
 };

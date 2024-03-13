@@ -21,10 +21,11 @@ module.exports = (sequelize, Sequelize) => {
         type: DataTypes.INTEGER,
         defaultValue: 1,
       },
-      // typeToken: {
-      //   type: DataTypes.STRING(25),
-      //   allowNull : false
-      // },
+      typeToken: {
+        type: DataTypes.STRING(25),
+        allowNull : true,
+        defaultValue : "refreshToken"
+      },
       email: {
         type: DataTypes.STRING(100),
         allowNull: false,

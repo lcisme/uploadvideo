@@ -10,7 +10,7 @@ const userController = require("../controllers/userController");
 
 router.post("/signup", userController.createUser);
 router.post("/login", userController.verifyUser);
-router.post("/refresh-token", userController.refreshToken);
+router.post("/refresh-token", userController.refreshTokenHandler );
 
 
 // crud

@@ -46,9 +46,12 @@ const createRefreshToken = async (data) => {
 const verifyToken = (token) => {
   return jwt.verify(token, jwtSecret);
 };
-
+ const verifyRefreshToken =(token) => {
+  return jwt.verify(token, jwtRefreshSecret)
+ } 
 module.exports = {
   createToken,
   createRefreshToken,
   verifyToken,
+  verifyRefreshToken
 };
