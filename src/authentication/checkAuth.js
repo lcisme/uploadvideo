@@ -14,7 +14,7 @@ const checkRoleUserFile = async (req, res, next) => {
     return BaseResponse.error(res, 403, "File not found");
   }
 
-  if (req.userData.role === ROLE.USER && file.user_Id !== req.userData.id) {
+  if (req.userData.role === ROLE.USER && file.userId !== req.userData.id) {
     return BaseResponse.error(res, 403, "Unauthorized access");
   }
 
@@ -80,7 +80,7 @@ const checkRoleUser = (req, res, next) => {
 const checkRoleCreateUser = async (req, res, next) => {
   if (req.userData.role === ROLE.USER) {
     const filesUploadedByUserCount = await fileModel.findAll({
-      where: { user_Id: req.userData.id },
+      where: { userId: req.userData.id },
     });
     const turn = filesUploadedByUserCount.length;
     console.log(MAX_FILES_PER_USER);

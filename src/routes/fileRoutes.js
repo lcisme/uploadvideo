@@ -15,6 +15,7 @@ router.get(
   checkRoleUserFile,
   fileController.getFileById
 );
+
 router.patch(
   "/:fileId",
   checkAuth,
@@ -27,5 +28,6 @@ router.delete(
   checkRoleUserFile,
   fileController.deleteFileById
 );
-//
+// view
+router.get("/:viewFileUrl", checkAuth,  fileController.viewFile)
 module.exports = router;

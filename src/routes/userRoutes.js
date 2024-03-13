@@ -13,6 +13,9 @@ router.post("/login", userController.verifyUser);
 router.post("/refresh-token", userController.refreshTokenHandler );
 
 
+//logout
+router.post("/logout",checkAuth, userController.logoutUser)
+
 // crud
 router.get(
   "/getAll",

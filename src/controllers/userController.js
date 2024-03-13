@@ -11,6 +11,10 @@ const { BaseResponse, ApplicationError } = require("../common/common");
 const jwt = require("jsonwebtoken");
 const { JWT_REFRESH_SECRET } = require("../config/constant");
 const jwtRefreshSecret = JWT_REFRESH_SECRET;
+const redis = require('redis');
+const JWTR = require('jwt-redis').default;
+const redisClient = redis.createClient();
+const jwtr = new JWTR(redisClient);
 
 const createUser = async (req, res, next) => {
   const userData = req.body;
@@ -51,6 +55,25 @@ const verifyUser = async (req, res, next) => {
     refreshToken: refreshToken,
   });
 };
+
+const logoutUser = async (req, res) => {
+  
+  // req.body.accessToken  += mmahoa
+  try {
+    const token = req.headers.authorization;
+    if (!token) {
+      throw new ApplicationError(400, "Token is missing");
+    }
+
+    await jwtr.destroy(token);
+
+    return BaseResponse.success(res, 200, "Logout successful");
+  } catch (error) {
+    console.error('Error during logout:', error);
+    return BaseResponse.error(res, 500, "Internal server error");
+  }
+};
+
 
 const refreshTokenHandler = async (req, res, next) => {
   const { refreshToken } = req.body;
@@ -170,6 +193,7 @@ const searchByName = async (req, res, next) => {
   }
   return BaseResponse.success(res, 200, "success", user);
 };
+
 module.exports = {
   getAllUsers,
   getUserById,
@@ -179,4 +203,5 @@ module.exports = {
   verifyUser,
   searchByName,
   refreshTokenHandler,
+  logoutUser
 };

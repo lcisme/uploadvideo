@@ -41,22 +41,36 @@ app.use("/v1/moveToTrash", trashRouter);
 
 // app.use("/", upLoadVideo);
 
-app.use((err, req, res ,next) => {
-  res.setHeader('Content-Type', 'application/json');
+app.use((err, req, res, next) => {
+  res.setHeader("Content-Type", "application/json");
   return BaseResponse.error(res, err.statusCode, err.message, err);
 });
 
 const deleteFilesInTrash = async () => {
-  const twoMinutesAgo = new Date(Date.now() - 2 * 60000);
-  console.log(twoMinutesAgo);
-  const filesInTrash = await File.findAll({
-    where: { status: 0, deletedAt: { [Sequelize.Op.lt]: twoMinutesAgo } },
-  });
-
-  for (const file of filesInTrash) {
-    await file.destroy();
+  try {
+    const now = new Date();
+    await File.destroy({
+      where: {
+        status: 0,
+        deletedAt: {
+          [Sequelize.Op.lte]: now,
+        },
+      },
+    });
+    console.log("Files in trash have been deleted.");
+  } catch (error) {
+    console.error("Error deleting files in trash:", error);
   }
 };
+
+
+cron.schedule("* * * * *", async () => {
+  try {
+    await deleteFilesInTrash();
+  } catch (error) {
+    console.error("Error executing cron job:", error);
+  }
+});
 
 cron.schedule("* * * * *", async () => {
   try {

@@ -7,13 +7,18 @@ const createFile = async (fileData) => {
   return newFile;
 };
 
+const viewFile = async (viewFileUrl) => {
+  const file = await File.findOne({ where: { viewFile: viewFileUrl } });
+  return file ? file.viewFileUrl : null;
+};
+
 const getAllFiles = async () => {
   const files = await File.findAll();
   return files;
 };
 
 const getAllFilesById = async (fileId) => {
-  const files = await File.findAll({ where: { user_Id: fileId } });
+  const files = await File.findAll({ where: { userId: fileId } });
   return files;
 };
 const getFileById = async (fileId) => {
@@ -52,5 +57,6 @@ module.exports = {
   updateFileById,
   deleteFileById,
   createFile,
-  getAllFilesById
+  getAllFilesById,
+  viewFile
 };

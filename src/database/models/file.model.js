@@ -9,7 +9,15 @@ module.exports = (sequelize, Sequelize) => {
         primaryKey: true,
         autoIncrement: true,
       },
+      originalName: {
+        type: DataTypes.TEXT("long"),
+        allowNull: false,
+      },
       nameFile: {
+        type: DataTypes.TEXT("long"),
+        allowNull: false,
+      },
+      viewFile: {
         type: DataTypes.TEXT("long"),
         allowNull: false,
       },
@@ -17,7 +25,7 @@ module.exports = (sequelize, Sequelize) => {
         type: DataTypes.INTEGER,
         defaultValue: 1,
       },
-      user_Id: {
+      userId: {
         type: DataTypes.INTEGER,
         allowNull: false,
       },

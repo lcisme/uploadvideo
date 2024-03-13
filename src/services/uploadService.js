@@ -24,11 +24,16 @@ const createFile = async (fileData) => {
   return File.createFile(fileData);
 };
 
+const viewFile = async (viewFileUrl) => {
+  return File.viewFile(viewFileUrl)
+}
+
 module.exports = {
   getAllFiles,
   getFileById,
   updateFileById,
   deleteFileById,
   createFile,
-  getAllFilesById
+  getAllFilesById,
+  viewFile
 };
