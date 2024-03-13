@@ -15,7 +15,6 @@ const createUser = async (userData) => {
 
 const verifyUser = async (userData) => {
   const user = await UserLogin.findOne({ where: { email: userData.email } });
-  console.log(user);
   if (!user) {
     return null;
   }

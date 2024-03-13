@@ -17,10 +17,6 @@ module.exports = (sequelize, Sequelize) => {
         type: DataTypes.TEXT("long"),
         allowNull: false,
       },
-      viewFile: {
-        type: DataTypes.TEXT("long"),
-        allowNull: false,
-      },
       status: {
         type: DataTypes.INTEGER,
         defaultValue: 1,

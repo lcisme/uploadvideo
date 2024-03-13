@@ -3,7 +3,7 @@ const db = require("../database/models");
 const fileModel = db.File;
 const { ROLE, JWT_SECRET, MAX_FILES_PER_USER } = require("../config/constant");
 const jwtSecret = JWT_SECRET;
-const { BaseResponse } = require("../common/common");
+const { BaseResponse, ApplicationError } = require("../common/common");
 
 const { File } = require("../database/models/file.model");
 
@@ -34,19 +34,20 @@ const checkRoleListUser = (req, res, next) => {
 };
 
 const checkAuth = (req, res, next) => {
-  try {
-    const token = req.headers.authorization.split(" ")[1];
-    const decodedToken = jwt.verify(token, jwtSecret);
-    req.userData = decodedToken;
-    return next();
-  } catch (error) {
-    return BaseResponse.error(res, 401, "Invalid token");
+  const token = req.headers.authorization.split(" ")[1];
+  if (!token) {
+    return next(new ApplicationError(400, "Invalid token"));
   }
+  const decodedToken = jwt.verify(token, jwtSecret);
+  if (decodedToken.typeToken !== "ACCESS_TOKEN") {
+    return next(new ApplicationError(400, "Invalid token"));
+  }
+  req.userData = decodedToken;
+  return next();
 };
 
-
 const checkRoleAdmin = (req, res, next) => {
-  if (req.userData && req.userData.role !== ROLE.ADMIN) {
+  if (!req.userData || req.userData?.role !== ROLE.ADMIN) {
     return BaseResponse.error(res, 403, "You not admin");
   }
   return next();
@@ -56,9 +57,11 @@ const checkRolePremium = (req, res, next) => {
   if (req.userData && req.userData.role !== ROLE.PREMIUM) {
     return BaseResponse.error(res, 403, "You not premium");
   }
+
   if (req.userData.role === ROLE.ADMIN) {
     return next();
   }
+  
   return next();
 };
 
@@ -94,7 +97,23 @@ const checkRoleCreateUser = async (req, res, next) => {
   }
   return next();
 };
+
+
+const can = (...roleName) => {
+  return (req, res, next) => {
+    if (!req.userData) {
+      return BaseResponse.error(res, 403, "Permission denied.");
+    }
+    const roleOfUser = req.userData.role;
+    if (!roleName.includes(roleOfUser)) {
+      return BaseResponse.error(res, 403, "Permission denied.");
+    }
+    return next();
+  };
+}
+
 module.exports = {
+  can,
   checkAuth,
   checkRoleAdmin,
   checkRolePremium,

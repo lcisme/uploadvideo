@@ -41,13 +41,14 @@ const verifyUser = async (req, res, next) => {
     email: user.email,
     id: user.id,
     role: user.role,
+    typeToken: "ACCESS_TOKEN"
   });
 
   const refreshToken = await createRefreshToken({
     email: user.email,
     id: user.id,
     role: user.role,
-    typeToken: user.typeToken,
+    typeToken: "REFRESH_TOKEN",
   });
   return BaseResponse.success(res, 200, "success", {
     accessToken: token,

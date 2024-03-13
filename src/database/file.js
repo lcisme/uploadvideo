@@ -7,10 +7,6 @@ const createFile = async (fileData) => {
   return newFile;
 };
 
-const viewFile = async (viewFileUrl) => {
-  const file = await File.findOne({ where: { viewFile: viewFileUrl } });
-  return file ? file.viewFileUrl : null;
-};
 
 const getAllFiles = async () => {
   const files = await File.findAll();
@@ -57,6 +53,5 @@ module.exports = {
   updateFileById,
   deleteFileById,
   createFile,
-  getAllFilesById,
-  viewFile
+  getAllFilesById
 };

@@ -4,14 +4,21 @@ const uploadFile = require("../middleware/upload");
 const fs = require("fs");
 const { BaseResponse, ApplicationError } = require("../common/common");
 const e = require("express");
-const { patch } = require("../uploadvideo");
+const path = require("path");
+const port = process.env.PORT;
 
 const getAllFiles = async (req, res, next) => {
   const files = await fileService.getAllFiles();
   if (!files) {
     throw new ApplicationError(400, "Files not found");
   }
-  return BaseResponse.success(res, 200, "success", files);
+  const results = files.map((file) => {
+    return {
+      ...file.dataValues,
+      viewFile: `${req.protocol}://${req.hostname}:${port}/v1/files/${file.nameFile}`
+    };
+  });
+  return BaseResponse.success(res, 200, "success", results);
 };
 
 const getAllFilesById = async (req, res, next) => {
@@ -66,23 +73,28 @@ const deleteFileById = async (req, res, next) => {
   if (!file) {
     throw new ApplicationError(400, "File not found");
   }
-  const fileName = file.nameFile;
+  const fileName = file.nameFile; // them duong dan va cho vao cron
   fs.unlinkSync(fileName);
   await fileService.deleteFileById(id);
   return BaseResponse.success(res, 200, "success", { deleteFile: fileName });
 };
 
 const viewFile = async (req, res, next) => {
+  console.log("suck my dick");
+  console.log(req.params);
   try {
     const { viewFileUrl } = req.params;
-    const filePath = await fileService.viewFile(viewFileUrl);
-    console.log(filePath+"heheh");
-    res.sendFile(filePath);
+    const filePath = path.join(__dirname, "uploads", viewFileUrl);
+    const newFilePath = filePath.replace(
+      "src\\controllers\\uploads",
+      "uploads"
+    );
+    console.log(filePath + "heheh");
+    res.sendFile(newFilePath);
   } catch (error) {
     next(error);
   }
 };
-
 
 const createFile = async (req, res, next) => {
   console.log(SIZEFILE);
@@ -98,23 +110,17 @@ const createFile = async (req, res, next) => {
     );
   }
   const nameFirst = req.file.originalname;
+  const fileName = req.file.filename;
   const idUser = req.userData.id;
-  const filePath = req.file.path;
-  //fix url ngan di
-  const uploadVideoIndex = filePath.indexOf("uploadvideo");
-  const relativePath = filePath.substring(uploadVideoIndex);
   const fileRecord = await fileService.createFile({
     originalName: nameFirst,
-    nameFile: relativePath,
-    viewFile: filePath,
+    nameFile: fileName,
     userId: idUser,
   });
-  return BaseResponse.success(
-    res,
-    200,
-    "Uploaded the file successfully",
-    fileRecord
-  );
+  return BaseResponse.success(res, 200, "Uploaded the file successfully", {
+    ...fileRecord.dataValues,
+    viewFile: `${req.protocol}://${req.hostname}:${port}/v1/files/${fileName}`,
+  });
 };
 
 module.exports = {
@@ -124,5 +130,5 @@ module.exports = {
   deleteFileById,
   createFile,
   getAllFilesById,
-  viewFile
+  viewFile,
 };

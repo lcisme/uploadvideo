@@ -67,6 +67,9 @@ const deleteFilesInTrash = async () => {
 cron.schedule("* * * * *", async () => {
   try {
     await deleteFilesInTrash();
+    //   const fileName = file.nameFile; // them duong dan va cho vao cron
+//  fs.unlinkSync(fileName);
+
   } catch (error) {
     console.error("Error executing cron job:", error);
   }
