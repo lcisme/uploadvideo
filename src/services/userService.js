@@ -15,7 +15,6 @@ const createUser = async (userData) => {
 
 const verifyUser = async (userData) => {
   const user = await UserLogin.findOne({ where: { email: userData.email } });
-  console.log(user);
   if (!user) {
     return null;
   }
@@ -47,6 +46,9 @@ const deleteUserById = async (userId) => {
   return User.deleteUserById(userId);
 };
 
+const searchByName = async (q, orderType, page, limit, orderField,select) => {
+  return User.searchByName(q, orderType, page, limit, orderField, select);
+};
 module.exports = {
   getAllUsers,
   getUserById,
@@ -54,4 +56,5 @@ module.exports = {
   deleteUserById,
   createUser,
   verifyUser,
+  searchByName,
 };

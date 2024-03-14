@@ -1,19 +1,40 @@
 const express = require("express");
 
 const router = new express.Router();
-const { checkAuth,checkRoleUser, checkRoleUserFile } = require("../authentication/checkAuth");
+const {
+  checkAuth,
+  checkRoleUserFile,
+  checkRoleAdmin,
+  checkRoleListUser,
+  checkRoleCreateUser,
+  can,
+} = require("../authentication/checkAuth");
 
 const fileController = require("../controllers/fileController");
+const { ROLE } = require("../config/constant");
 
 // crud
-router.get("/getAll", checkAuth, checkRoleUserFile, fileController.getAllFiles);
-router.post("/upload", checkAuth, fileController.createFile);
+router.get("/getAll", checkAuth, can(ROLE.ADMIN), fileController.getAllFiles);
+router.get("/:viewFileUrl", fileController.viewFile);
+router.get(
+  "/getAllBy/:fileId",
+  checkAuth,
+  checkRoleListUser,
+  fileController.getAllFilesById
+);
+router.post(
+  "/upload",
+  checkAuth,
+  checkRoleCreateUser,
+  fileController.createFile
+);
 router.get(
   "/:fileId",
   checkAuth,
   checkRoleUserFile,
   fileController.getFileById
 );
+
 router.patch(
   "/:fileId",
   checkAuth,
@@ -26,5 +47,5 @@ router.delete(
   checkRoleUserFile,
   fileController.deleteFileById
 );
-
+// view
 module.exports = router;

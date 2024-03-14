@@ -1,23 +1,33 @@
+const { DataTypes } = require("sequelize");
+
 module.exports = (sequelize, Sequelize) => {
   const File = sequelize.define(
     "files",
     {
       id: {
-        type: Sequelize.INTEGER,
+        type: DataTypes.INTEGER,
         primaryKey: true,
         autoIncrement: true,
       },
+      originalName: {
+        type: DataTypes.TEXT("long"),
+        allowNull: false,
+      },
       nameFile: {
-        type: Sequelize.TEXT("long"),
+        type: DataTypes.TEXT("long"),
         allowNull: false,
       },
       status: {
-        type: Sequelize.INTEGER,
-        defaultValue: 0,
+        type: DataTypes.INTEGER,
+        defaultValue: 1,
       },
-      user_Id: {
-        type: Sequelize.INTEGER,
+      userId: {
+        type: DataTypes.INTEGER,
         allowNull: false,
+      },
+      deletedAt: {
+        type: DataTypes.DATE,
+        allowNull: true,
       },
     },
     {

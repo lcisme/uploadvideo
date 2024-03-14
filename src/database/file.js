@@ -1,6 +1,6 @@
 const db = require("../database/models");
 const File = db.File;
-const multer = require('multer')
+const multer = require("multer");
 
 const createFile = async (fileData) => {
   const newFile = await File.create(fileData);
@@ -8,12 +8,16 @@ const createFile = async (fileData) => {
 };
 
 const getAllFiles = async () => {
-  const files = await File.findAll();
+  const files = await File.findAll({ attributes: { exclude: ["deletedAt"] } });
   return files;
 };
 
+const getAllFilesById = async (fileId) => {
+  const files = await File.findAll({ where: { userId: fileId } });
+  return files;
+};
 const getFileById = async (fileId) => {
-  const file = await File.findOne({ where: { id: fileId } });
+  const file = await File.findOne({ where: { id: fileId } ,attributes: { exclude: ["deletedAt"] } });
   return file;
 };
 
@@ -38,7 +42,6 @@ const deleteFileById = async (fileId) => {
     const deletedFile = await File.destroy({ where: { id: fileId } });
     return deletedFile;
   } catch (error) {
-    console.error("Error deleting file:", error);
     throw error;
   }
 };
@@ -49,4 +52,5 @@ module.exports = {
   updateFileById,
   deleteFileById,
   createFile,
+  getAllFilesById,
 };
