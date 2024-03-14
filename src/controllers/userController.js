@@ -11,10 +11,11 @@ const { BaseResponse, ApplicationError } = require("../common/common");
 const jwt = require("jsonwebtoken");
 const { JWT_REFRESH_SECRET } = require("../config/constant");
 const jwtRefreshSecret = JWT_REFRESH_SECRET;
-const redis = require('redis');
-const JWTR = require('jwt-redis').default;
-const redisClient = redis.createClient();
-const jwtr = new JWTR(redisClient);
+const bcrypt = require("bcrypt");
+const { JWT_SECRET } = require("../config/constant");
+const jwtSecret = JWT_SECRET;
+const db = require("../database/models");
+const User = db.User;
 
 const createUser = async (req, res, next) => {
   const userData = req.body;
@@ -41,7 +42,8 @@ const verifyUser = async (req, res, next) => {
     email: user.email,
     id: user.id,
     role: user.role,
-    typeToken: "ACCESS_TOKEN"
+    typeToken: "ACCESS_TOKEN",
+    hashToken: user.hashToken,
   });
 
   const refreshToken = await createRefreshToken({
@@ -49,6 +51,7 @@ const verifyUser = async (req, res, next) => {
     id: user.id,
     role: user.role,
     typeToken: "REFRESH_TOKEN",
+    hashToken: user.hashToken,
   });
   return BaseResponse.success(res, 200, "success", {
     accessToken: token,
@@ -57,24 +60,27 @@ const verifyUser = async (req, res, next) => {
   });
 };
 
-const logoutUser = async (req, res) => {
-  
-  // req.body.accessToken  += mmahoa
+const logoutUser = async (req, res, next) => {
+  const token = req.headers.authorization.split(" ")[1];
+
+  if (!token) {
+    return next(new ApplicationError(400, "logout fail"));
+  }
+
+  const newHashToken = Math.random();
   try {
-    const token = req.headers.authorization;
-    if (!token) {
-      throw new ApplicationError(400, "Token is missing");
+    const [, rowsUpdated] = await User.update(
+      { hashToken: newHashToken },
+      { where: { id: req.userData.id } }
+    );
+    if (rowsUpdated === 0) {
+      return next(new ApplicationError(400, "User not found"));
     }
-
-    await jwtr.destroy(token);
-
-    return BaseResponse.success(res, 200, "Logout successful");
-  } catch (error) {
-    console.error('Error during logout:', error);
-    return BaseResponse.error(res, 500, "Internal server error");
+    return BaseResponse.success(res, 200, "success", {message: "Logout successful"});
+    } catch (error) {
+    return next(error);
   }
 };
-
 
 const refreshTokenHandler = async (req, res, next) => {
   const { refreshToken } = req.body;
@@ -204,5 +210,5 @@ module.exports = {
   verifyUser,
   searchByName,
   refreshTokenHandler,
-  logoutUser
+  logoutUser,
 };

@@ -17,6 +17,20 @@ router.post("/refresh-token", userController.refreshTokenHandler );
 router.post("/logout",checkAuth, userController.logoutUser)
 
 // crud
+// router.get(
+//   "/getAll",
+//   checkAuth,
+//   checkParams,
+//   checkRoleAdmin,
+//   (req, res, next) => {
+//     console.log(req.query);
+//     if (Object.keys(req.query).length === 0) {
+//       userController.getAllUsers(req, res, next);
+//       return;
+//     }
+//     userController.searchByName(req, res, next);
+//   }
+// );
 router.get(
   "/getAll",
   checkAuth,

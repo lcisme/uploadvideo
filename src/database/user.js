@@ -5,7 +5,7 @@ const { LIMIT } = require("../config/constant");
 
 const createUser = async (userData) => {
   const duplicationCheck = await User.findOne({
-    where: { email: userData.email },
+    where: { email: userData.email }, attributes: { exclude: ['password'] }
   });
   if (duplicationCheck) {
     return null;

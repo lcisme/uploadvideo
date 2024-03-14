@@ -11,7 +11,6 @@ const jwtTokenExpire = JWT_TOKEN_EXPIRE;
 const jwtRefreshTokenExpire = JWT_REFRESH_TOKEN;
 
 const createToken = async (data) => {
-  console.log(data);
   return new Promise((resolve, reject) => {
     jwt.sign(data, jwtSecret, { expiresIn: jwtTokenExpire }, (err, token) => {
       if (err) {

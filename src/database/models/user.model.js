@@ -21,10 +21,9 @@ module.exports = (sequelize, Sequelize) => {
         type: DataTypes.INTEGER,
         defaultValue: 1,
       },
-      typeToken: {
-        type: DataTypes.STRING(25),
+      hashToken: {
+        type: DataTypes.STRING(100),
         allowNull : true,
-        defaultValue : "refreshToken"
       },
       email: {
         type: DataTypes.STRING(100),

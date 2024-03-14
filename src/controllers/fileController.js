@@ -13,9 +13,10 @@ const getAllFiles = async (req, res, next) => {
     throw new ApplicationError(400, "Files not found");
   }
   const results = files.map((file) => {
+    console.log(file.dataValues);
     return {
       ...file.dataValues,
-      viewFile: `${req.protocol}://${req.hostname}:${port}/v1/files/${file.nameFile}`
+      viewFile: `${req.protocol}://${req.hostname}:${port}/v1/files/${file.nameFile}`,
     };
   });
   return BaseResponse.success(res, 200, "success", results);

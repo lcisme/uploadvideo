@@ -1,6 +1,7 @@
 const jwt = require("jsonwebtoken");
 const db = require("../database/models");
 const fileModel = db.File;
+const User = db.User;
 const { ROLE, JWT_SECRET, MAX_FILES_PER_USER } = require("../config/constant");
 const jwtSecret = JWT_SECRET;
 const { BaseResponse, ApplicationError } = require("../common/common");
@@ -33,14 +34,21 @@ const checkRoleListUser = (req, res, next) => {
   return next();
 };
 
-const checkAuth = (req, res, next) => {
+const checkAuth = async (req, res, next) => {
   const token = req.headers.authorization.split(" ")[1];
+  console.log(token);
   if (!token) {
     return next(new ApplicationError(400, "Invalid token"));
   }
   const decodedToken = jwt.verify(token, jwtSecret);
   if (decodedToken.typeToken !== "ACCESS_TOKEN") {
     return next(new ApplicationError(400, "Invalid token"));
+  }
+  const user = await User.findOne({
+    where: { id: decodedToken.id, hashToken: decodedToken.hashToken },
+  });
+  if (!user) {
+    return next(new ApplicationError(400, "Not found  user"));
   }
   req.userData = decodedToken;
   return next();
@@ -61,7 +69,7 @@ const checkRolePremium = (req, res, next) => {
   if (req.userData.role === ROLE.ADMIN) {
     return next();
   }
-  
+
   return next();
 };
 
@@ -98,7 +106,6 @@ const checkRoleCreateUser = async (req, res, next) => {
   return next();
 };
 
-
 const can = (...roleName) => {
   return (req, res, next) => {
     if (!req.userData) {
@@ -110,7 +117,7 @@ const can = (...roleName) => {
     }
     return next();
   };
-}
+};
 
 module.exports = {
   can,
