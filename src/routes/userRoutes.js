@@ -35,9 +35,6 @@ router.get(
     return
   }
 );
-// router.get("/getAll", checkAuth,checkRoleAdmin, userController.getAllUsers)  
-// router.get("/getAll/u",  validateParams(validateUserSearch),  userController.searchByName)  
-
 router.get(
   "/get/:userId",
   checkAuth,
