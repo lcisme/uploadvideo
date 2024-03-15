@@ -122,7 +122,8 @@ const validateParams = (schemaValidate) => {
   return async (req, res, next) => {
     console.log(req.params);
     console.log(req.body);
-    if (!req.params && !req.body) {
+    console.log(req.query);
+    if (!req.params && !req.body && !req.query) {
       return BaseResponse.error(res, 400, "No params or body found.");
     }
     try {
@@ -134,6 +135,9 @@ const validateParams = (schemaValidate) => {
         await schemaValidate(req.body);
       }
 
+      if (req.query) {
+        await schemaValidate(req.query);
+      }
       return next();
     } catch (error) {
       console.log(error);

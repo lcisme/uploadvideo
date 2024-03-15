@@ -12,6 +12,7 @@ const { BaseResponse, ApplicationError } = require("./src/common/common");
 const fs = require("fs");
 const path = require("path");
 const File = db.File;
+const userController = require("./src/controllers/userController");
 
 const app = express();
 const port = process.env.PORT;

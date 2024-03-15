@@ -27,9 +27,9 @@ const verifyUser = async (userData) => {
   }
 };
 
-const getAllUsers = () => {
-  return User.getAllUsers();
-};
+// const getAllUsers = () => {
+//   return User.getAllUsers();
+// };
 
 const getUserById = async (userId) => {
   return User.getUserById(userId);
@@ -46,11 +46,10 @@ const deleteUserById = async (userId) => {
   return User.deleteUserById(userId);
 };
 
-const searchByName = async (q, orderType, page, limit, orderField,select) => {
+const searchByName = async (q, orderType, page, limit, orderField, select) => {
   return User.searchByName(q, orderType, page, limit, orderField, select);
 };
 module.exports = {
-  getAllUsers,
   getUserById,
   updateUserById,
   deleteUserById,
