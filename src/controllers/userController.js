@@ -1,5 +1,9 @@
 const userService = require("../services/userService");
-const { validate, validateUpdate } = require("./validators/userValidator");
+const {
+  validate,
+  validateUpdate,
+  validateUserSearch,
+} = require("./validators/userValidator");
 const {
   createToken,
   createRefreshToken,
@@ -16,6 +20,8 @@ const { JWT_SECRET } = require("../config/constant");
 const jwtSecret = JWT_SECRET;
 const db = require("../database/models");
 const User = db.User;
+const Sequelize = require("sequelize");
+const { validateParams } = require("../authentication/checkAuth");
 
 const createUser = async (req, res, next) => {
   const userData = req.body;
@@ -158,21 +164,12 @@ const getUserById = async (req, res, next) => {
 const updateUserById = async (req, res, next) => {
   const id = req.params.userId;
   const updateParams = req.body;
-  try {
-    await validateUpdate(updateParams);
-  } catch (error) {
-    return BaseResponse.error(res, 400, "Invalid user data");
+  await validateUpdate(updateParams);
+  const user = await userService.updateUserById(id, updateParams);
+  if (!user) {
+    return BaseResponse.error(res, 404, "user not found");
   }
-
-  try {
-    const user = await userService.updateUserById(id, updateParams);
-    if (!user) {
-      return BaseResponse.error(res, 404, "user not found");
-    }
-    return BaseResponse.success(res, 200, "success", { user });
-  } catch (error) {
-    return next(error);
-  }
+  return BaseResponse.success(res, 200, "success", { user });
 };
 
 const deleteUserById = async (req, res, next) => {
@@ -192,7 +189,7 @@ const searchByName = async (req, res, next) => {
   try {
     const page = req.query.page || 1;
     const limit = req.query.limit || 10;
-    const q = req.query.q;
+    const q = req.query.q || "";
     const orderType = (req.query.orderType || "asc").toLowerCase();
     const orderField = req.query.orderField || "username";
     let select = req.query.select || ["username", "email"];
@@ -207,11 +204,33 @@ const searchByName = async (req, res, next) => {
       orderField,
       select
     );
-    console.log(user);
-    if (!user) {
-      throw new ApplicationError(400, "username not found");
-    }
-    return BaseResponse.success(res, 200, "success", user);
+    const totalCount = await User.count({
+      where: {
+        [Sequelize.Op.or]: [
+          { username: { [Sequelize.Op.like]: `%${q}%` } },
+          { email: { [Sequelize.Op.like]: `%${q}%` } },
+        ],
+      },
+    });
+    const totalPages = Math.ceil(totalCount / limit);
+    const hasBackPage = !(parseInt(page) === 1 || totalCount === 0);
+    const countUser = user.length;
+    const hasNextPage = !(countUser < parseInt(limit));
+
+    console.log(hasNextPage);
+    const results = {
+      pagination: {
+        total: totalCount,
+        totalPages: totalPages,
+        hasNextPage: hasNextPage,
+        hasBackPage: hasBackPage,
+        nextPage: hasNextPage ? parseInt(page) + 1 : "Cannot next",
+        backpage: hasBackPage ? parseInt(page) - 1 : "Cannot back",
+      },
+    };
+
+    res.paginatedResults = results;
+    return BaseResponse.success(res, 200, "success", { user, results });
   } catch (error) {
     return next(new ApplicationError(500, error));
   }

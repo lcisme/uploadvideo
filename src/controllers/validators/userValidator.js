@@ -44,11 +44,11 @@ const userSearch = {
     q: { type: "string" },
     limit: {
       type: "string",
-      pattern: /^\d+$/.toString().slice(1, -1),
+      minimum: 1,
     },
     page: {
       type: "string",
-      pattern: /^\d+$/.toString().slice(1, -1),
+      minimum: 1,
     },
     orderField: { type: "string" },
     orderType: { type: "string" },
@@ -63,7 +63,7 @@ const userById = {
   properties: {
     userId: {
       type: "string",
-      pattern: /^\d+$/.toString().slice(1, -1),
+      pattern: /^[1-9]\d*$/.toString().slice(1, -1),
     },
   },
   additionalProperties: false,
