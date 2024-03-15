@@ -45,7 +45,9 @@ app.use("/v1/moveToTrash", trashRouter);
 
 app.use((err, req, res, next) => {
   res.setHeader("Content-Type", "application/json");
-  return BaseResponse.error(res, err.statusCode, err.message, err);
+  // return BaseResponse.error(res, err.statusCode, err.message, err);
+  return BaseResponse.error(res, err.statusCode || 500, err.message || "Internal Server Error", err);
+
 });
 
 const deleteFilesInTrash = async () => {
@@ -96,15 +98,6 @@ cron.schedule("* * * * *", async () => {
     await deleteFilesInTrash();
   } catch (error) {
     console.error("Error executing cron job:", error);
-  }
-});
-
-cron.schedule("* * * * *", async () => {
-  try {
-    await deleteFilesInTrash();
-    console.log("Files in trash have been deleted.");
-  } catch (error) {
-    console.error("Error deleting files in trash:", error);
   }
 });
 

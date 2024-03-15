@@ -1,4 +1,4 @@
-const fileService = require("../services/uploadService");
+    const fileService = require("../services/uploadService");
 const { SIZEFILE } = require("../config/constant");
 const uploadFile = require("../middleware/upload");
 const fs = require("fs");

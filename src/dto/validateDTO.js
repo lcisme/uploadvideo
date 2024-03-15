@@ -3,6 +3,7 @@ const { ApplicationError } = require("../common/common");
 const checkParams = (req, res, next) => {
   const { userId, fileId } = req.params;
   const { q, limit, page, orderField, orderType, select } = req.query;
+  console.log(q, limit, page, orderField, orderType, select );
   if (limit !== undefined && (isNaN(Number(limit)) || Number(limit) < 0)) {
     throw new ApplicationError(400, "Limit must be a non-negative number");
   }
