@@ -47,5 +47,9 @@ router.delete(
   checkRoleUserFile,
   fileController.deleteFileById
 );
+
+router.use((req, res) => {
+  res.status(404).json("Page not found");
+});
 // view
 module.exports = router;

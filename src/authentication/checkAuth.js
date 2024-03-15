@@ -7,6 +7,7 @@ const jwtSecret = JWT_SECRET;
 const { BaseResponse, ApplicationError } = require("../common/common");
 
 const { File } = require("../database/models/file.model");
+const { error } = require("ajv/dist/vocabularies/applicator/dependencies");
 
 const checkRoleUserFile = async (req, res, next) => {
   const fileId = req.params.fileId;
@@ -36,7 +37,6 @@ const checkRoleListUser = (req, res, next) => {
 
 const checkAuth = async (req, res, next) => {
   const token = req.headers.authorization.split(" ")[1];
-  console.log(token);
   if (!token) {
     return next(new ApplicationError(400, "Invalid token"));
   }
@@ -55,7 +55,7 @@ const checkAuth = async (req, res, next) => {
 };
 
 const checkRoleAdmin = (req, res, next) => {
-  if (!req.userData || req.userData?.role !== ROLE.ADMIN) {
+  if (!req.userData || req.userData.role !== ROLE.ADMIN) {
     return BaseResponse.error(res, 403, "You not admin");
   }
   return next();
@@ -117,10 +117,33 @@ const can = (...roleName) => {
     }
     return next();
   };
-};
+};                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
+const validateParams = (schemaValidate) => {
+  return async (req, res, next) => {
+    console.log(req.params);
+    console.log(req.body);
+    if (!req.params && !req.body) {
+      return BaseResponse.error(res, 400, "No params or body found.");
+    }
+    try {
+      if (req.params) {
+        await schemaValidate(req.params);
+      }
+      
+      if (req.body) {
+        await schemaValidate(req.body);
+      }
 
+      return next();
+    } catch (error) {
+      console.log(error);
+      return BaseResponse.error(res, 400, "Validation failed.", error);
+    }
+  };
+};
 module.exports = {
   can,
+  validateParams,
   checkAuth,
   checkRoleAdmin,
   checkRolePremium,
