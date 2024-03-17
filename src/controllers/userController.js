@@ -215,7 +215,14 @@ const searchByName = async (req, res, next) => {
     const totalPages = Math.ceil(totalCount / limit);
     const hasBackPage = !(parseInt(page) === 1 || totalCount === 0);
     const countUser = user.length;
-    const hasNextPage = !(countUser < parseInt(limit));
+    // 2
+    const totalQueriesUsers = (page - 1) * limit + countUser;
+    //      (4-1) * 2 + 2
+    const totalUsers = totalCount;
+    //8
+    const isLastPage = totalQueriesUsers >= totalUsers;
+    // 8 >= 8 => true
+    const hasNextPage = !(countUser < parseInt(limit)) && isLastPage;
 
     console.log(hasNextPage);
     const results = {
