@@ -1,5 +1,4 @@
-const DATABASE_URL =
-  process.env.DATABASE_URL || "mysql://root:root@localhost:3306/file-sys";
+const DATABASE_URL = process.env.DATABASE_URL || "mysql://root:root@localhost:3306/file-sys";
 const ROLE = {
   ADMIN: "ROLE_ADMIN",
   PREMIUM: "ROLE_PREMIUM",

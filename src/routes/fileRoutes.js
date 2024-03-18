@@ -4,7 +4,6 @@ const router = new express.Router();
 const {
   checkAuth,
   checkRoleUserFile,
-  checkRoleAdmin,
   checkRoleListUser,
   checkRoleCreateUser,
   can,

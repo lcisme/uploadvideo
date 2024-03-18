@@ -44,15 +44,24 @@ const userSearch = {
     q: { type: "string" },
     limit: {
       type: "string",
-      minimum: 1,
+      pattern: /^[1-9]\d*$/.toString().slice(1, -1),
     },
     page: {
       type: "string",
-      minimum: 1,
+      pattern: /^[1-9]\d*$/.toString().slice(1, -1),
     },
     orderField: { type: "string" },
     orderType: { type: "string" },
-    select: { type: "array", items: { type: "string" } },
+    select: {
+      anyOf: [
+          { type: "string" },
+          {
+              type: "array",
+              items: { type: "string" },
+              minItems: 2  
+          }
+      ]
+  }
   },
   additionalProperties: false,
 };
