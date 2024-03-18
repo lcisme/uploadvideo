@@ -52,7 +52,17 @@ const userSearch = {
     },
     orderField: { type: "string" },
     orderType: { type: "string" },
-    select: { type: "string" },
+    select: {
+      anyOf: [
+          { type: "string" },
+          {
+              type: "array",
+              items: { type: "string" },
+              minItems: 2  
+          }
+      ]
+  }
+  
   },
   additionalProperties: false,
 };

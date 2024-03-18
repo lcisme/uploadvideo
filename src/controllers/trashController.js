@@ -7,12 +7,10 @@ const moveToTrash = async (req, res) => {
     await trashService.moveToTrash(fileId);
     return BaseResponse.success(res, 200, "File moved to trash successfully");
   } catch (error) {
-    return BaseResponse.error(res, 500,"Internal server error" );
+    return BaseResponse.error(res, 500, "Internal server error");
   }
 };
 
-
-
 module.exports = {
-    moveToTrash
-}
+  moveToTrash,
+};

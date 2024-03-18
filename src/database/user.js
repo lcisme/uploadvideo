@@ -2,28 +2,40 @@ const db = require("../database/models");
 const User = db.User;
 const Sequelize = require("sequelize");
 const { LIMIT } = require("../config/constant");
+const bcrypt = require("bcrypt");
+const { BaseResponse, ApplicationError } = require("../common/common");
 
 const createUser = async (userData) => {
   const duplicationCheck = await User.findOne({
     where: { email: userData.email },
     attributes: { exclude: ["password"] },
   });
+  const hashedPassword = await bcrypt.hash(userData.password, 10);
+  userData.password = hashedPassword;
   if (duplicationCheck) {
     return null;
   }
   const newUser = await User.create(userData);
+  if (!newUser) {
+    return null;
+  }
   return newUser;
 };
 
-const verifyUser = async (userEmail) => {
-  const user = await User.findOne({ where: { email: userEmail } });
+const verifyUser = async (userData) => {
+  const user = await User.findOne({ where: { email: userData.email } });
+  const isPasswordCorrect = await bcrypt.compare(
+    userData.password,
+    user.password
+  );
+  if (!user) {
+    return null;
+  }
+  if (!isPasswordCorrect) {
+    return null;
+  }
   return user;
 };
-
-// const getAllUsers = async () => {
-//   const users = await User.findAll({ attributes: { exclude: ["password"] } });
-//   return users;
-// };
 
 const getUserById = async (userId) => {
   const user = await User.findOne({
@@ -35,10 +47,13 @@ const getUserById = async (userId) => {
 
 const updateUserById = async (userId, updateParams) => {
   try {
+    if (updateParams.password) {
+      const hashedPassword = await bcrypt.hash(updateParams.password, 10);
+      updateParams.password = hashedPassword;
+    }
     const [, rowsUpdated] = await User.update(updateParams, {
       where: { id: userId },
     });
-
     if (rowsUpdated === 0) {
       throw new Error("Fail");
     }
@@ -62,11 +77,11 @@ const deleteUserById = async (userId) => {
   }
 };
 
-const searchByName = async (q, orderType, page, limit, orderField, select) => {
+const searchByName = async (q, orderType, page, limit, orderFiled, select) => {
   try {
-    const OFFSET = (page - 1) * limit ;
+    const OFFSET = (page - 1) * limit;
     const a = {
-      order: [[orderField, orderType]],
+      order: [[orderFiled, orderType]],
       limit: parseInt(limit),
       offset: OFFSET,
       attributes: select,

@@ -36,30 +36,28 @@ const checkRoleListUser = (req, res, next) => {
 };
 
 const checkAuth = async (req, res, next) => {
-  const token = req.headers.authorization.split(" ")[1];
-  if (!token) {
-    return next(new ApplicationError(400, "Invalid token"));
+  try {
+    const token = req.headers.authorization.split(" ")[1];
+    if (!token) {
+      return next(new ApplicationError(400, "Invalid token"));
+    }
+    const decodedToken = jwt.verify(token, jwtSecret);
+    if (decodedToken.typeToken !== "ACCESS_TOKEN") {
+      return next(new ApplicationError(400, "Invalid token"));
+    }
+    const user = await User.findOne({
+      where: { id: decodedToken.id, hashToken: decodedToken.hashToken },
+    });
+    if (!user) {
+      return next(new ApplicationError(400, "Not found  user"));
+    }
+    req.userData = decodedToken;
+    return next();
+  } catch (error) {
+    return next(new ApplicationError(500, "Token is timeout"));
   }
-  const decodedToken = jwt.verify(token, jwtSecret);
-  if (decodedToken.typeToken !== "ACCESS_TOKEN") {
-    return next(new ApplicationError(400, "Invalid token"));
-  }
-  const user = await User.findOne({
-    where: { id: decodedToken.id, hashToken: decodedToken.hashToken },
-  });
-  if (!user) {
-    return next(new ApplicationError(400, "Not found  user"));
-  }
-  req.userData = decodedToken;
-  return next();
 };
 
-const checkRoleAdmin = (req, res, next) => {
-  if (!req.userData || req.userData.role !== ROLE.ADMIN) {
-    return BaseResponse.error(res, 403, "You not admin");
-  }
-  return next();
-};
 
 const checkRolePremium = (req, res, next) => {
   if (req.userData && req.userData.role !== ROLE.PREMIUM) {
@@ -67,21 +65,6 @@ const checkRolePremium = (req, res, next) => {
   }
 
   if (req.userData.role === ROLE.ADMIN) {
-    return next();
-  }
-
-  return next();
-};
-
-const checkRoleUser = (req, res, next) => {
-  if (
-    req.userData.role === ROLE.USER &&
-    req.userData.id !== parseInt(req.params.userId)
-  ) {
-    return BaseResponse.error(res, 403, "Unauthorized access");
-  }
-
-  if (req.userData.role === ROLE.ADMIN || req.userData.role === ROLE.PREMIUM) {
     return next();
   }
 
@@ -115,9 +98,17 @@ const can = (...roleName) => {
     if (!roleName.includes(roleOfUser)) {
       return BaseResponse.error(res, 403, "Permission denied.");
     }
+    if (
+      roleName.includes(ROLE.USER) &&
+      req.params.userId &&
+      req.userData.id !== parseInt(req.params.userId)
+    ) {
+      return BaseResponse.error(res, 403, "Unauthorized access");
+    }
     return next();
   };
-};                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
+};
+
 const validateParams = (schemaValidate) => {
   return async (req, res, next) => {
     console.log(req.params);
@@ -130,7 +121,7 @@ const validateParams = (schemaValidate) => {
       if (req.params) {
         await schemaValidate(req.params);
       }
-      
+
       if (req.body) {
         await schemaValidate(req.body);
       }
@@ -149,9 +140,7 @@ module.exports = {
   can,
   validateParams,
   checkAuth,
-  checkRoleAdmin,
   checkRolePremium,
-  checkRoleUser,
   checkRoleUserFile,
   checkRoleCreateUser,
   checkRoleListUser,

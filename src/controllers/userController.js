@@ -1,35 +1,19 @@
 const userService = require("../services/userService");
 const {
-  validate,
-  validateUpdate,
-  validateUserSearch,
-} = require("./validators/userValidator");
-const {
   createToken,
   createRefreshToken,
-  verifyToken,
   verifyRefreshToken,
 } = require("../authentication/jwt");
-const userModel = require("../database/models/user.model");
 const { BaseResponse, ApplicationError } = require("../common/common");
 const jwt = require("jsonwebtoken");
 const { JWT_REFRESH_SECRET } = require("../config/constant");
 const jwtRefreshSecret = JWT_REFRESH_SECRET;
-const bcrypt = require("bcrypt");
-const { JWT_SECRET } = require("../config/constant");
-const jwtSecret = JWT_SECRET;
 const db = require("../database/models");
 const User = db.User;
 const Sequelize = require("sequelize");
-const { validateParams } = require("../authentication/checkAuth");
 
 const createUser = async (req, res, next) => {
   const userData = req.body;
-  // try {
-  //   await validate(userData);
-  // } catch (error) {
-  //   return BaseResponse.error(res, 400, "Invalid email or password");
-  // }
   try {
     const newHashToken = Math.random();
     userData.hashToken = newHashToken;
@@ -39,46 +23,47 @@ const createUser = async (req, res, next) => {
     }
     return BaseResponse.success(res, 200, "ok", user);
   } catch (error) {
-    return next(error);
+    return next(new ApplicationError(500, error));
   }
 };
 
 const verifyUser = async (req, res, next) => {
   const userData = req.body;
-  await validate(userData);
-  const { dataValues: user } = await userService.verifyUser(userData);
-  if (!user) {
-    throw new ApplicationError(400, "Wrong email or password");
-  }
-  const token = await createToken({
-    email: user.email,
-    id: user.id,
-    role: user.role,
-    typeToken: "ACCESS_TOKEN",
-    hashToken: user.hashToken,
-  });
+  try {
+    const { dataValues: user } = await userService.verifyUser(userData);
+    if (!user) {
+      throw new ApplicationError(400, "Wrong email or password");
+    }
+    const token = await createToken({
+      email: user.email,
+      id: user.id,
+      role: user.role,
+      typeToken: "ACCESS_TOKEN",
+      hashToken: user.hashToken,
+    });
 
-  const refreshToken = await createRefreshToken({
-    email: user.email,
-    id: user.id,
-    role: user.role,
-    typeToken: "REFRESH_TOKEN",
-    hashToken: user.hashToken,
-  });
-  return BaseResponse.success(res, 200, "success", {
-    accessToken: token,
-    role: user.role,
-    refreshToken: refreshToken,
-  });
+    const refreshToken = await createRefreshToken({
+      email: user.email,
+      id: user.id,
+      role: user.role,
+      typeToken: "REFRESH_TOKEN",
+      hashToken: user.hashToken,
+    });
+    return BaseResponse.success(res, 200, "success", {
+      accessToken: token,
+      role: user.role,
+      refreshToken: refreshToken,
+    });
+  } catch (error) {
+    return next(new ApplicationError(500, error));
+  }
 };
 
 const logoutUser = async (req, res, next) => {
   const token = req.headers.authorization.split(" ")[1];
-
   if (!token) {
     return next(new ApplicationError(400, "logout fail"));
   }
-
   const newHashToken = Math.random();
   try {
     const [, rowsUpdated] = await User.update(
@@ -92,7 +77,7 @@ const logoutUser = async (req, res, next) => {
       message: "Logout successful",
     });
   } catch (error) {
-    return next(error);
+    return next(new ApplicationError(500, error));
   }
 };
 
@@ -108,9 +93,8 @@ const refreshTokenHandler = async (req, res, next) => {
   }
   try {
     const decoded = verifyRefreshToken(refreshToken);
-    const { email, id, role, typeToken } = decoded;
-    const accessToken = await createToken({ email, id, role });
-    console.log(accessToken + "hhuhu");
+    const { email, id, role, typeToken, hashToken } = decoded;
+    const accessToken = await createToken({ email, id, role, hashToken });
     const refreshNewToken = await createRefreshToken({
       email,
       id,
@@ -122,7 +106,7 @@ const refreshTokenHandler = async (req, res, next) => {
       refreshToken: refreshNewToken,
     });
   } catch (error) {
-    return next(error);
+    return next(new ApplicationError(500, error));
   }
 };
 
@@ -134,19 +118,9 @@ const getAllUsers = async (req, res, next) => {
     }
     return BaseResponse.success(res, 200, "success", users);
   } catch (error) {
-    return next(error);
+    return next(new ApplicationError(500, error));
   }
 };
-
-// const getUserById = async (req, res, next) => {
-//   const id = req.params.userId;
-
-//   const user = await userService.getUserById(id);
-//   if (!user) {
-//     throw new ApplicationError(404, "user not found");
-//   }
-//   return BaseResponse.success(res, 200, "success", user);
-// };
 
 const getUserById = async (req, res, next) => {
   const id = req.params.userId;
@@ -157,19 +131,22 @@ const getUserById = async (req, res, next) => {
     }
     return BaseResponse.success(res, 200, "success", user);
   } catch (error) {
-    return next(error);
+    return next(new ApplicationError(500, error));
   }
 };
 
 const updateUserById = async (req, res, next) => {
   const id = req.params.userId;
   const updateParams = req.body;
-  await validateUpdate(updateParams);
-  const user = await userService.updateUserById(id, updateParams);
-  if (!user) {
-    return BaseResponse.error(res, 404, "user not found");
+  try {
+    const user = await userService.updateUserById(id, updateParams);
+    if (!user) {
+      return BaseResponse.error(res, 404, "user not found");
+    }
+    return BaseResponse.success(res, 200, "success", { user });
+  } catch (error) {
+    return next(new ApplicationError(500, error));
   }
-  return BaseResponse.success(res, 200, "success", { user });
 };
 
 const deleteUserById = async (req, res, next) => {
@@ -181,7 +158,7 @@ const deleteUserById = async (req, res, next) => {
     }
     return BaseResponse.success(res, 200, "success");
   } catch (error) {
-    return next(error);
+    return next(new ApplicationError(500, error));
   }
 };
 
@@ -215,7 +192,10 @@ const searchByName = async (req, res, next) => {
     const totalPages = Math.ceil(totalCount / limit);
     const hasBackPage = !(parseInt(page) === 1 || totalCount === 0);
     const countUser = user.length;
-    const hasNextPage = !(countUser < parseInt(limit));
+    const totalQueriesUsers = (page - 1) * limit + countUser;
+    const totalUsers = totalCount;
+    const isLastPage = totalQueriesUsers >= totalUsers;
+    const hasNextPage = !(countUser < parseInt(limit)) && !isLastPage;
 
     console.log(hasNextPage);
     const results = {

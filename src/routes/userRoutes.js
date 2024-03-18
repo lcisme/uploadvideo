@@ -3,8 +3,7 @@ const router = new express.Router();
 const {
   checkAuth,
   validateParams,
-  checkRoleUser,
-  checkRoleAdmin,
+  can,
 } = require("../authentication/checkAuth");
 const userController = require("../controllers/userController");
 const {
@@ -12,9 +11,10 @@ const {
   validateUserSearch,
   validateUserById,
 } = require("../controllers/validators/userValidator");
+const { ROLE } = require("../config/constant");
 
 router.post("/signup", validateParams(validate), userController.createUser);
-router.post("/login", userController.verifyUser);
+router.post("/login", validateParams(validate) ,userController.verifyUser);
 router.post("/refresh-token", userController.refreshTokenHandler);
 router.post("/logout", checkAuth, userController.logoutUser);
 
@@ -24,7 +24,7 @@ router.post("/logout", checkAuth, userController.logoutUser);
 router.get(
   "/getAll",
   checkAuth,
-  checkRoleAdmin,
+  can(ROLE.ADMIN),
   validateParams(validateUserSearch),
   userController.searchByName
 );
@@ -33,7 +33,7 @@ router.get(
   "/get/:userId",
   checkAuth,
   validateParams(validateUserById),
-  checkRoleUser,
+  can(ROLE.USER),
   userController.getUserById
 );
 router.patch(
@@ -46,7 +46,7 @@ router.delete(
   "/get/:userId",
   checkAuth,
   validateParams(validateUserById),
-  checkRoleAdmin,
+  can(ROLE.ADMIN),
   userController.deleteUserById
 );
 
