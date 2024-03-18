@@ -10,7 +10,7 @@ const { JWT_REFRESH_SECRET } = require("../config/constant");
 const jwtRefreshSecret = JWT_REFRESH_SECRET;
 const db = require("../database/models");
 const User = db.User;
-const Sequelize = require("sequelize");
+const paginateResults = require("./contanstController");
 
 const createUser = async (req, res, next) => {
   const userData = req.body;
@@ -173,7 +173,7 @@ const searchByName = async (req, res, next) => {
     if (typeof select === "string") {
       select = [select];
     }
-    const user = await userService.searchByName(
+    const { user, totalCount } = await userService.searchByName(
       q,
       orderType,
       page,
@@ -181,31 +181,8 @@ const searchByName = async (req, res, next) => {
       orderField,
       select
     );
-    const totalCount = await User.count({
-      where: {
-        [Sequelize.Op.or]: [
-          { username: { [Sequelize.Op.like]: `%${q}%` } },
-          { email: { [Sequelize.Op.like]: `%${q}%` } },
-        ],
-      },
-    });
-    const totalPages = Math.ceil(totalCount / limit);
-    const hasBackPage = !(parseInt(page) === 1 || totalCount === 0);
-    const countUser = user.length;  
-    const totalQueriesUsers = (page - 1) * limit + countUser;
-    const totalUsers = totalCount;
-    const isLastPage = totalQueriesUsers >= totalUsers;
-    const hasNextPage = !(countUser < parseInt(limit)) && !isLastPage;
-    const results = {
-      pagination: {
-        total: totalCount,
-        totalPages: totalPages,
-        hasNextPage: hasNextPage,
-        hasBackPage: hasBackPage,
-        nextPage: hasNextPage ? parseInt(page) + 1 : "Cannot next",
-        backpage: hasBackPage ? parseInt(page) - 1 : "Cannot back",
-      },
-    };
+
+    const results = paginateResults(totalCount, limit, page, user);
 
     res.paginatedResults = results;
     return BaseResponse.success(res, 200, "success", { user, results });

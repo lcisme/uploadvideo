@@ -1,6 +1,5 @@
 const db = require("../database/models");
 const File = db.File;
-const multer = require("multer");
 const Sequelize = require("sequelize");
 
 const createFile = async (fileData) => {
@@ -48,6 +47,14 @@ const deleteFileById = async (fileId) => {
 const searchFile = async (q, orderType, page, limit, orderFiled, select) => {
   try {
     const OFFSET = (page - 1) * limit;
+    const totalCount = await File.count({
+      where: {
+        [Sequelize.Op.or]: [
+          { originalName: { [Sequelize.Op.like]: `%${q}%` } },
+          { nameFile: { [Sequelize.Op.like]: `%${q}%` } },
+        ],
+      },
+    });
     const a = {
       order: [[orderFiled, orderType]],
       limit: parseInt(limit),
@@ -62,8 +69,8 @@ const searchFile = async (q, orderType, page, limit, orderFiled, select) => {
         ],
       };
     }
-    const searchResult = await File.findAll(a);
-    return searchResult;
+    const file = await File.findAll(a);
+    return {file, totalCount};
   } catch (error) {
     throw error;
   }

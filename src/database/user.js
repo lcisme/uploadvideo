@@ -1,9 +1,7 @@
 const db = require("../database/models");
 const User = db.User;
 const Sequelize = require("sequelize");
-const { LIMIT } = require("../config/constant");
 const bcrypt = require("bcrypt");
-const { BaseResponse, ApplicationError } = require("../common/common");
 
 const createUser = async (userData) => {
   const duplicationCheck = await User.findOne({
@@ -80,6 +78,14 @@ const deleteUserById = async (userId) => {
 const searchByName = async (q, orderType, page, limit, orderFiled, select) => {
   try {
     const OFFSET = (page - 1) * limit;
+    const totalCount = await User.count({
+      where: {
+        [Sequelize.Op.or]: [
+          { username: { [Sequelize.Op.like]: `%${q}%` } },
+          { email: { [Sequelize.Op.like]: `%${q}%` } },
+        ],
+      },
+    });
     const a = {
       order: [[orderFiled, orderType]],
       limit: parseInt(limit),
@@ -94,8 +100,8 @@ const searchByName = async (q, orderType, page, limit, orderFiled, select) => {
         ],
       };
     }
-    const searchResult = await User.findAll(a);
-    return searchResult;
+    const user = await User.findAll(a);
+    return { user, totalCount };
   } catch (error) {
     throw error;
   }

@@ -1,5 +1,4 @@
 const User = require("../database/user");
-const db = require("../database/models");
 
 const createUser = async (userData) => {
   return User.createUser(userData);

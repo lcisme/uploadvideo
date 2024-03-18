@@ -3,12 +3,9 @@ const { SIZEFILE } = require("../config/constant");
 const uploadFile = require("../middleware/upload");
 const fs = require("fs");
 const { BaseResponse, ApplicationError } = require("../common/common");
-const e = require("express");
 const path = require("path");
 const port = process.env.PORT;
-const db = require("../database/models");
-const Sequelize = require("sequelize");
-const File = db.File;
+const paginateResults = require("./contanstController");
 
 const searchFile = async (req, res, next) => {
   try {
@@ -21,37 +18,20 @@ const searchFile = async (req, res, next) => {
     if (typeof select === "string") {
       select = [select];
     }
-    const file = await fileService.searchFile(q,orderType,page,limit,orderField,select);
-    const totalCount = await File.count({
-      where: {
-        [Sequelize.Op.or]: [
-          { originalName: { [Sequelize.Op.like]: `%${q}%` } },
-          { nameFile: { [Sequelize.Op.like]: `%${q}%` } },
-        ],
-      },
-    });
+    const { file, totalCount } = await fileService.searchFile(
+      q,
+      orderType,
+      page,
+      limit,
+      orderField,
+      select
+    );
     file.forEach((f) => {
       f.dataValues.viewFile = `${req.protocol}://${req.hostname}:${port}/v1/files/${f.nameFile}`;
     });
-    const totalPages = Math.ceil(totalCount / limit);
-    const hastBackPage = !(parseInt(page) === 1 || totalCount === 0);
-    const countFiles = file.length;
-    const totalQueriesFiles = (page - 1) * limit + countFiles;
-    const totalFiles = totalCount;
-    const isLastPage = totalQueriesFiles >= totalFiles;
-    const hasNextPage = !(countFiles < parseInt(limit)) && !isLastPage;
-    const results = {
-      pagination: {
-        total: totalCount,
-        totalPages: totalPages,
-        hasNextPage: hasNextPage,
-        hastBackPage: hastBackPage,
-        nextPage: hasNextPage ? parseInt(page) + 1 : "Cannot next",
-        backPage: hastBackPage ? parseInt(page) - 1 : "Cannot back",
-      },
-    };
+    const results = paginateResults(totalCount, limit, page, file);
+
     res.paginatedResults = results;
-    console.log(results);
     return BaseResponse.success(res, 200, "success", { file, results });
   } catch (error) {
     return next(new ApplicationError(500, error));
