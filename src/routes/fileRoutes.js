@@ -3,17 +3,26 @@ const express = require("express");
 const router = new express.Router();
 const {
   checkAuth,
+  validateParams,
   checkRoleUserFile,
   checkRoleListUser,
   checkRoleCreateUser,
   can,
 } = require("../authentication/checkAuth");
-
+const { validateSearch } = require("../controllers/validators/userValidator");
 const fileController = require("../controllers/fileController");
 const { ROLE } = require("../config/constant");
 
 // crud
-router.get("/getAll", checkAuth, can(ROLE.ADMIN), fileController.getAllFiles);
+// router.get("/getAll", checkAuth, can(ROLE.ADMIN), fileController.getAllFiles);
+router.get(
+  "/getAll",
+  checkAuth,
+  can(ROLE.ADMIN),
+  validateParams(validateSearch),
+  fileController.searchFile
+);
+
 router.get("/:viewFileUrl", fileController.viewFile);
 router.get(
   "/getAllBy/:fileId",

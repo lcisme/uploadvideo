@@ -94,7 +94,6 @@ const searchByName = async (q, orderType, page, limit, orderFiled, select) => {
         ],
       };
     }
-    console.log(a);
     const searchResult = await User.findAll(a);
     return searchResult;
   } catch (error) {

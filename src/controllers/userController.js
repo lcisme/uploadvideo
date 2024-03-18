@@ -191,13 +191,11 @@ const searchByName = async (req, res, next) => {
     });
     const totalPages = Math.ceil(totalCount / limit);
     const hasBackPage = !(parseInt(page) === 1 || totalCount === 0);
-    const countUser = user.length;
+    const countUser = user.length;  
     const totalQueriesUsers = (page - 1) * limit + countUser;
     const totalUsers = totalCount;
     const isLastPage = totalQueriesUsers >= totalUsers;
     const hasNextPage = !(countUser < parseInt(limit)) && !isLastPage;
-
-    console.log(hasNextPage);
     const results = {
       pagination: {
         total: totalCount,

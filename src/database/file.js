@@ -1,15 +1,11 @@
 const db = require("../database/models");
 const File = db.File;
 const multer = require("multer");
+const Sequelize = require("sequelize");
 
 const createFile = async (fileData) => {
   const newFile = await File.create(fileData);
   return newFile;
-};
-
-const getAllFiles = async () => {
-  const files = await File.findAll({ attributes: { exclude: ["deletedAt"] } });
-  return files;
 };
 
 const getAllFilesById = async (fileId) => {
@@ -17,7 +13,10 @@ const getAllFilesById = async (fileId) => {
   return files;
 };
 const getFileById = async (fileId) => {
-  const file = await File.findOne({ where: { id: fileId } ,attributes: { exclude: ["deletedAt"] } });
+  const file = await File.findOne({
+    where: { id: fileId },
+    attributes: { exclude: ["deletedAt"] },
+  });
   return file;
 };
 
@@ -46,11 +45,35 @@ const deleteFileById = async (fileId) => {
   }
 };
 
+const searchFile = async (q, orderType, page, limit, orderFiled, select) => {
+  try {
+    const OFFSET = (page - 1) * limit;
+    const a = {
+      order: [[orderFiled, orderType]],
+      limit: parseInt(limit),
+      offset: OFFSET,
+      attributes: select,
+    };
+    if (q) {
+      a["where"] = {
+        [Sequelize.Op.or]: [
+          { originalName: { [Sequelize.Op.like]: `%${q}` } },
+          { nameFile: { [Sequelize.Op.like]: `%${q}` } },
+        ],
+      };
+    }
+    const searchResult = await File.findAll(a);
+    return searchResult;
+  } catch (error) {
+    throw error;
+  }
+};
+
 module.exports = {
-  getAllFiles,
   getFileById,
   updateFileById,
   deleteFileById,
   createFile,
   getAllFilesById,
+  searchFile,
 };
