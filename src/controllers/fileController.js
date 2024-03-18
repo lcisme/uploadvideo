@@ -21,14 +21,7 @@ const searchFile = async (req, res, next) => {
     if (typeof select === "string") {
       select = [select];
     }
-    const file = await fileService.searchFile(
-      q,
-      orderType,
-      page,
-      limit,
-      orderField,
-      select
-    );
+    const file = await fileService.searchFile(q,orderType,page,limit,orderField,select);
     const totalCount = await File.count({
       where: {
         [Sequelize.Op.or]: [
