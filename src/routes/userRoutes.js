@@ -8,7 +8,7 @@ const {
 const userController = require("../controllers/userController");
 const {
   validate,
-  validateUserSearch,
+  validateSearch,
   validateUserById,
 } = require("../controllers/validators/userValidator");
 const { ROLE } = require("../config/constant");
@@ -25,7 +25,7 @@ router.get(
   "/getAll",
   checkAuth,
   can(ROLE.ADMIN),
-  validateParams(validateUserSearch),
+  validateParams(validateSearch),
   userController.searchByName
 );
 

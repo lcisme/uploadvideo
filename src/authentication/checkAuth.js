@@ -99,9 +99,7 @@ const can = (...roleName) => {
       return BaseResponse.error(res, 403, "Permission denied.");
     }
     if (
-      roleName.includes(ROLE.USER) &&
-      req.params.userId &&
-      req.userData.id !== parseInt(req.params.userId)
+      roleName.includes(ROLE.USER) && req.params.userId && req.userData.id !== parseInt(req.params.userId)
     ) {
       return BaseResponse.error(res, 403, "Unauthorized access");
     }

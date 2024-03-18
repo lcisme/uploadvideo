@@ -1,4 +1,4 @@
-const Ajv =   require("ajv");
+const Ajv = require("ajv");
 const ajv = new Ajv();
 
 ajv.addKeyword({
@@ -12,7 +12,7 @@ const userSchema = {
     email: {
       type: "string",
       maxLength: 50,
-      pattern: "^[^\s@]+@[^\s@]+\.[^\s@]+$",
+      pattern: "^[^s@]+@[^s@]+.[^s@]+$",
     },
     password: { type: "string", maxLength: 50, minLength: 8 },
     username: { type: "string" },
@@ -27,7 +27,7 @@ const userUpdateSchema = {
     email: {
       type: "string",
       maxLength: 50,
-      pattern: "^[^\s@]+@[^\s@]+\.[^\s@]+$",
+      pattern: "^[^s@]+@[^s@]+.[^s@]+$",
     },
     password: { type: "string", maxLength: 50, minLength: 8 },
     username: { type: "string" },
@@ -37,7 +37,7 @@ const userUpdateSchema = {
   additionalProperties: false,
 };
 
-const userSearch = {
+const SearchAll = {
   $async: true,
   type: "object",
   properties: {
@@ -54,14 +54,14 @@ const userSearch = {
     orderType: { type: "string" },
     select: {
       anyOf: [
-          { type: "string" },
-          {
-              type: "array",
-              items: { type: "string" },
-              minItems: 2  
-          }
-      ]
-  }
+        { type: "string" },
+        {
+          type: "array",
+          items: { type: "string" },
+          minItems: 2,
+        },
+      ],
+    },
   },
   additionalProperties: false,
 };
@@ -80,12 +80,12 @@ const userById = {
 
 const validate = ajv.compile(userSchema);
 const validateUpdate = ajv.compile(userUpdateSchema);
-const validateUserSearch = ajv.compile(userSearch);
+const validateSearch = ajv.compile(SearchAll);
 const validateUserById = ajv.compile(userById);
 
 module.exports = {
   validate,
   validateUpdate,
-  validateUserSearch,
+  validateSearch,
   validateUserById,
 };
