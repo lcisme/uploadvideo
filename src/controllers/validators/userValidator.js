@@ -62,7 +62,6 @@ const userSearch = {
           }
       ]
   }
-  
   },
   additionalProperties: false,
 };
