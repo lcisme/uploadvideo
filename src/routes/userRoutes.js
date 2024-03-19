@@ -14,7 +14,7 @@ const {
 const { ROLE } = require("../config/constant");
 
 router.post("/signup", validateParams(validate), userController.createUser);
-router.post("/login", validateParams(validate) ,userController.verifyUser);
+router.post("/login", validateParams(validate) ,userController.loginUser);
 router.post("/refresh-token", userController.refreshTokenHandler);
 router.post("/logout", checkAuth, userController.logoutUser);
 

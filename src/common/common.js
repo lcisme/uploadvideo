@@ -1,5 +1,3 @@
-const db = require("../database/models");
-
 class ApplicationError extends Error {
   constructor(statusCode, message) {
     super(message);

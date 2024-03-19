@@ -1,22 +1,11 @@
 const userService = require("../services/userService");
-const {
-  createToken,
-  createRefreshToken,
-  verifyRefreshToken,
-} = require("../authentication/jwt");
 const { BaseResponse, ApplicationError } = require("../common/common");
-const jwt = require("jsonwebtoken");
-const { JWT_REFRESH_SECRET } = require("../config/constant");
-const jwtRefreshSecret = JWT_REFRESH_SECRET;
-const db = require("../database/models");
-const User = db.User;
-const paginateResults = require("./contanstController");
+
+const paginateResults = require("../middleware/pagination");
 
 const createUser = async (req, res, next) => {
   const userData = req.body;
   try {
-    const newHashToken = Math.random();
-    userData.hashToken = newHashToken;
     const user = await userService.createUser(userData);
     if (!user) {
       return BaseResponse.error(res, 400, "User already exists");
@@ -27,50 +16,22 @@ const createUser = async (req, res, next) => {
   }
 };
 
-const verifyUser = async (req, res, next) => {
+const loginUser = async (req, res, next) => {
   const userData = req.body;
   try {
-    const { dataValues: user } = await userService.verifyUser(userData);
-    if (!user) {
-      throw new ApplicationError(400, "Wrong email or password");
-    }
-    const token = await createToken({
-      email: user.email,
-      id: user.id,
-      role: user.role,
-      typeToken: "ACCESS_TOKEN",
-      hashToken: user.hashToken,
-    });
-
-    const refreshToken = await createRefreshToken({
-      email: user.email,
-      id: user.id,
-      role: user.role,
-      typeToken: "REFRESH_TOKEN",
-      hashToken: user.hashToken,
-    });
-    return BaseResponse.success(res, 200, "success", {
-      accessToken: token,
-      role: user.role,
-      refreshToken: refreshToken,
-    });
+    const userTokenData = await userService.loginUser(userData);
+    return BaseResponse.success(res, 200, "success", userTokenData);
   } catch (error) {
     return next(new ApplicationError(500, error));
   }
 };
 
 const logoutUser = async (req, res, next) => {
-  const token = req.headers.authorization.split(" ")[1];
-  if (!token) {
-    return next(new ApplicationError(400, "logout fail"));
-  }
-  const newHashToken = Math.random();
+  const userId = req.userData.id;
   try {
-    const [, rowsUpdated] = await User.update(
-      { hashToken: newHashToken },
-      { where: { id: req.userData.id } }
-    );
-    if (rowsUpdated === 0) {
+    const logout = await userService.logoutUser(userId);
+
+    if (!logout) {
       return next(new ApplicationError(400, "User not found"));
     }
     return BaseResponse.success(res, 200, "success", {
@@ -82,41 +43,45 @@ const logoutUser = async (req, res, next) => {
 };
 
 const refreshTokenHandler = async (req, res, next) => {
-  const { refreshToken } = req.body;
-  if (!refreshToken) {
-    return next(new ApplicationError(400, "Refresh token is required"));
-  }
-  const decodedRefreshToken = jwt.verify(refreshToken, jwtRefreshSecret);
-  console.log(decodedRefreshToken);
-  if (!decodedRefreshToken.typeToken) {
-    return next(new ApplicationError(400, "This is not Refresh Token"));
-  }
   try {
-    const decoded = verifyRefreshToken(refreshToken);
-    const { email, id, role, typeToken, hashToken } = decoded;
-    const accessToken = await createToken({ email, id, role, hashToken });
-    const refreshNewToken = await createRefreshToken({
-      email,
-      id,
-      role,
-      typeToken,
-    });
-    return BaseResponse.success(res, 200, "success", {
-      accessToken: accessToken,
-      refreshToken: refreshNewToken,
-    });
+    const { refreshToken } = req.body;
+    if (!refreshToken) {
+      throw new ApplicationError(400, "Refresh token is required");
+    }
+    const tokens = await userService.refreshTokenHandler(refreshToken);
+    return BaseResponse.success(
+      res,
+      200,
+      "Tokens refreshed successfully",
+      tokens
+    );
   } catch (error) {
-    return next(new ApplicationError(500, error));
+    return next(error);
   }
 };
 
-const getAllUsers = async (req, res, next) => {
+const searchByName = async (req, res, next) => {
   try {
-    const users = await userService.getAllUsers();
-    if (!users) {
-      throw new ApplicationError(400, "users not found");
+    const page = req.query.page || 1;
+    const limit = req.query.limit || 10;
+    const q = req.query.q || "";
+    const orderType = (req.query.orderType || "asc").toLowerCase();
+    const orderField = req.query.orderField || "username";
+    let select = req.query.select || ["username", "email"];
+    if (typeof select === "string") {
+      select = [select];
     }
-    return BaseResponse.success(res, 200, "success", users);
+    const { user, totalCount } = await userService.searchByName(
+      q,
+      orderType,
+      page,
+      limit,
+      orderField,
+      select
+    );
+
+    const results = paginateResults(totalCount, limit, page, user);
+    return BaseResponse.success(res, 200, "success", { user, results });
   } catch (error) {
     return next(new ApplicationError(500, error));
   }
@@ -162,43 +127,14 @@ const deleteUserById = async (req, res, next) => {
   }
 };
 
-const searchByName = async (req, res, next) => {
-  try {
-    const page = req.query.page || 1;
-    const limit = req.query.limit || 10;
-    const q = req.query.q || "";
-    const orderType = (req.query.orderType || "asc").toLowerCase();
-    const orderField = req.query.orderField || "username";
-    let select = req.query.select || ["username", "email"];
-    if (typeof select === "string") {
-      select = [select];
-    }
-    const { user, totalCount } = await userService.searchByName(
-      q,
-      orderType,
-      page,
-      limit,
-      orderField,
-      select
-    );
-
-    const results = paginateResults(totalCount, limit, page, user);
-
-    res.paginatedResults = results;
-    return BaseResponse.success(res, 200, "success", { user, results });
-  } catch (error) {
-    return next(new ApplicationError(500, error));
-  }
-};
-
 module.exports = {
-  getAllUsers,
+  createUser,
+  loginUser,
+  logoutUser,
+  refreshTokenHandler,
+  searchByName,
   getUserById,
   updateUserById,
   deleteUserById,
-  createUser,
-  verifyUser,
-  searchByName,
-  refreshTokenHandler,
-  logoutUser,
 };
+

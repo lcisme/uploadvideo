@@ -26,6 +26,9 @@ const checkRoleUserFile = async (req, res, next) => {
 };
 
 const checkRoleListUser = (req, res, next) => {
+  if (req.userData.role === ROLE.ADMIN) {
+    return next();
+  }
   if (parseInt(req.params.fileId) !== parseInt(req.userData.id)) {
     return BaseResponse.error(res, 403, "Unauthorized access");
   }
