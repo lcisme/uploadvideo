@@ -74,6 +74,24 @@ const userById = {
       type: "string",
       pattern: /^[1-9]\d*$/.toString().slice(1, -1),
     },
+    username:  {
+      type: "string",
+    },
+    password:  {
+      type: "string",
+    }
+  },
+  additionalProperties: false,
+};
+
+const fileById = {
+  $async: true,
+  type: "object",
+  properties: {
+    fileById: {
+      type: "string",
+      pattern: /^[1-9]\d*$/.toString().slice(1, -1),
+    },
   },
   additionalProperties: false,
 };
@@ -82,6 +100,7 @@ const validate = ajv.compile(userSchema);
 const validateUpdate = ajv.compile(userUpdateSchema);
 const validateSearch = ajv.compile(SearchAll);
 const validateUserById = ajv.compile(userById);
+const validateFileById = ajv.compile(fileById);
 
 module.exports = {
   validate,

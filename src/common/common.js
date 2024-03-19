@@ -1,7 +1,3 @@
-const db = require("../database/models");
-const User = db.User;
-const Sequelize = require("sequelize");
-
 class ApplicationError extends Error {
   constructor(statusCode, message) {
     super(message);

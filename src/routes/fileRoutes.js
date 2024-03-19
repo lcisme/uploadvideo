@@ -9,7 +9,7 @@ const {
   checkRoleCreateUser,
   can,
 } = require("../authentication/checkAuth");
-const { validateSearch } = require("../controllers/validators/userValidator");
+const { validateSearch,validateUserById, validateFileById } = require("../controllers/validators/userValidator");
 const fileController = require("../controllers/fileController");
 const { ROLE } = require("../config/constant");
 
@@ -23,11 +23,12 @@ router.get(
   fileController.searchFile
 );
 
-router.get("/:viewFileUrl", fileController.viewFile);
+router.get("/view/:viewFileUrl", fileController.viewFile);
 router.get(
-  "/getAllBy/:fileId",
+  "/getAllBy/:userId",
   checkAuth,
   checkRoleListUser,
+  validateParams(validateUserById),
   fileController.getAllFilesById
 );
 router.post(
@@ -40,6 +41,7 @@ router.get(
   "/:fileId",
   checkAuth,
   checkRoleUserFile,
+  validateParams(validateFileById),
   fileController.getFileById
 );
 
@@ -47,13 +49,8 @@ router.patch(
   "/:fileId",
   checkAuth,
   checkRoleUserFile,
+  validateParams(validateFileById),
   fileController.updateFileById
-);
-router.delete(
-  "/:fileId",
-  checkAuth,
-  checkRoleUserFile,
-  fileController.deleteFileById
 );
 
 router.use((req, res) => {

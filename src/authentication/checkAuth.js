@@ -6,9 +6,6 @@ const { ROLE, JWT_SECRET, MAX_FILES_PER_USER } = require("../config/constant");
 const jwtSecret = JWT_SECRET;
 const { BaseResponse, ApplicationError } = require("../common/common");
 
-const { File } = require("../database/models/file.model");
-const { error } = require("ajv/dist/vocabularies/applicator/dependencies");
-
 const checkRoleUserFile = async (req, res, next) => {
   const fileId = req.params.fileId;
   const file = await fileModel.findByPk(fileId);
@@ -29,6 +26,9 @@ const checkRoleUserFile = async (req, res, next) => {
 };
 
 const checkRoleListUser = (req, res, next) => {
+  if (req.userData.role === ROLE.ADMIN) {
+    return next();
+  }
   if (parseInt(req.params.fileId) !== parseInt(req.userData.id)) {
     return BaseResponse.error(res, 403, "Unauthorized access");
   }
